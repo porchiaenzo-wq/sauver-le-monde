@@ -16,6 +16,8 @@
     {
       id: 'energy',
       title: 'Énergie',
+      role: 'reduce',
+      icon: 'bolt',
       intro: 'Les énergies fossiles produisent environ 90 % du CO₂ émis par l’homme.',
       levers: [
         {
@@ -77,6 +79,8 @@
     {
       id: 'land',
       title: 'Terres et alimentation',
+      role: 'reduce',
+      icon: 'leaf',
       intro: 'Forêts, agriculture et élevage : environ un quart des gaz à effet de serre.',
       levers: [
         {
@@ -127,6 +131,8 @@
     {
       id: 'removal',
       title: 'Retirer le CO₂ de l’air',
+      role: 'remove',
+      icon: 'capture',
       intro: 'Pour faire baisser la concentration, il faut absorber plus de CO₂ qu’on n’en émet.',
       levers: [
         {
@@ -156,6 +162,8 @@
     {
       id: 'geo',
       title: 'Géo-ingénierie solaire',
+      role: 'mask',
+      icon: 'sun',
       intro:
         'Renvoyer une partie du soleil vers l’espace. Rapide et puissant, mais ne retire pas le CO₂ (les océans continuent de s’acidifier) et comporte de grands risques.',
       levers: [
@@ -268,13 +276,20 @@
     },
   ];
 
+  /** Les trois façons d'agir sur le climat. */
+  const LEVER_ROLES = {
+    reduce: { label: 'Réduire', hint: 'émettre moins de gaz à effet de serre' },
+    remove: { label: 'Retirer', hint: 'enlever du CO₂ déjà dans l’air' },
+    mask: { label: 'Masquer', hint: 'cacher le réchauffement sans enlever le CO₂' },
+  };
+
   const REALISM_LABELS = {
     realiste: 'Réaliste',
     ambitieux: 'Ambitieux',
     extravagant: 'Extravagant',
   };
 
-  const api = { LEVER_GROUPS, GLOBAL_LEVERS, PRESETS, REALISM_LABELS };
+  const api = { LEVER_GROUPS, GLOBAL_LEVERS, PRESETS, REALISM_LABELS, LEVER_ROLES };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else Object.assign(root, api);
 })(typeof window !== 'undefined' ? window : globalThis);

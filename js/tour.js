@@ -150,6 +150,9 @@
     const step = steps[index];
     if (highlighted) highlighted.classList.remove('tour-highlight');
     highlighted = step.target();
+    // Ouvre la catégorie du levier si le joueur l'avait repliée.
+    const group = highlighted.closest('details.lever-group');
+    if (group) group.open = true;
     highlighted.classList.add('tour-highlight');
     highlighted.scrollIntoView({ behavior: 'smooth', block: 'start' });
 

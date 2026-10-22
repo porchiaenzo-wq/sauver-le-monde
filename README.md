@@ -4,6 +4,10 @@ Un simulateur climatique en une page web. On part de l'état réel de la Terre e
 
 Toutes les données et formules viennent de sources scientifiques vérifiées (GIEC, Global Carbon Project, NOAA, NASA, PNUE, AIE, études publiées dans *Science*, *Nature*, *PNAS*…). La liste complète est affichée en bas de la page et dans `js/sources.js`.
 
+## Les leviers
+
+Les leviers sont rangés en catégories, chacune avec sa couleur et son icône : Énergie et Terres et alimentation (**réduire** les émissions), Retirer le CO₂ de l'air (**retirer**), Géo-ingénierie solaire (**masquer** le réchauffement sans enlever le CO₂). L'en-tête de chaque catégorie résume en direct les leviers activés et leur coût, et chaque catégorie peut se replier.
+
 ## Les trois modes
 
 - **Bac à sable** : tous les leviers sont libres, avec des scénarios prêts à l'emploi.

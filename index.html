@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- ?v=… : numéro de version, à augmenter à chaque mise en ligne pour que les navigateurs
        rechargent les fichiers au lieu de garder l'ancienne version en mémoire. -->
-  <link rel="stylesheet" href="css/style.css?v=7">
+  <link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body>
   <header class="hero">
@@ -78,10 +78,11 @@
         <p id="preset-description" class="preset-description" aria-live="polite"></p>
       </div>
 
-      <div id="global-levers" class="lever-group"></div>
+      <div id="global-levers"></div>
       <div id="lever-groups"></div>
 
-      <div class="lever-group">
+      <!-- Déplacé par js/app.js dans la catégorie « Géo-ingénierie solaire » -->
+      <div id="geo-stop-box" class="geo-stop">
         <label class="checkbox">
           <input type="checkbox" id="geo-stop">
           <span>Arrêt brutal de la géo-ingénierie en <strong>2070</strong> (guerre, crise, manque d’argent…)</span>
@@ -221,7 +222,7 @@
   </section>
 
   <footer class="wrap footer">
-    <p class="version">Version 7 · carte des impacts nuancée</p>
+    <p class="version">Version 8 · catégories de leviers</p>
     <p>Projet éducatif. Modèle libre et vérifiable : le code est sur GitHub. Pour aller plus loin, essaie <a href="https://www.climateinteractive.org/en-roads/">En-ROADS</a> (Climate Interactive et MIT Sloan).</p>
   </footer>
 
@@ -267,17 +268,17 @@
     </div>
   </dialog>
 
-  <script src="js/sources.js?v=7"></script>
-  <script src="js/levers.js?v=7"></script>
-  <script src="js/model.js?v=7"></script>
-  <script src="js/costs.js?v=7"></script>
-  <script src="js/charts.js?v=7"></script>
-  <script src="js/app.js?v=7"></script>
-  <script src="js/world-map.js?v=7"></script>
-  <script src="js/impacts.js?v=7"></script>
-  <script src="js/map.js?v=7"></script>
-  <script src="js/challenges.js?v=7"></script>
-  <script src="js/challenge-ui.js?v=7"></script>
-  <script src="js/tour.js?v=7"></script>
+  <script src="js/sources.js?v=8"></script>
+  <script src="js/levers.js?v=8"></script>
+  <script src="js/model.js?v=8"></script>
+  <script src="js/costs.js?v=8"></script>
+  <script src="js/charts.js?v=8"></script>
+  <script src="js/app.js?v=8"></script>
+  <script src="js/world-map.js?v=8"></script>
+  <script src="js/impacts.js?v=8"></script>
+  <script src="js/map.js?v=8"></script>
+  <script src="js/challenges.js?v=8"></script>
+  <script src="js/challenge-ui.js?v=8"></script>
+  <script src="js/tour.js?v=8"></script>
 </body>
 </html>

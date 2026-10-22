@@ -114,25 +114,77 @@
     return wrapper;
   }
 
+  // Petites icônes des catégories (traits en SVG, couleur de la catégorie)
+  const ICONS = {
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+    leaf: '<path d="M5 21c0-9 6-15 16-16-1 10-7 16-16 16Z"/><path d="M5 21 14 12"/>',
+    capture: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  };
+
+  // En-têtes des catégories, pour afficher leur résumé en direct
+  const groupSummaries = [];
+
+  /** Crée une catégorie repliable : icône, titre, rôle, résumé, explication, puis ses leviers. */
+  function buildGroup(container, group) {
+    const box = document.createElement('details');
+    box.className = `lever-group group-${group.id}`;
+    box.open = true;
+    const summary = document.createElement('summary');
+    summary.className = 'group-head';
+    const icon = document.createElement('span');
+    icon.className = 'group-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[group.icon]}</svg>`;
+    const titles = document.createElement('span');
+    titles.className = 'group-titles';
+    const h = document.createElement('h3');
+    h.textContent = group.title;
+    titles.appendChild(h);
+    if (group.role) {
+      const role = window.LEVER_ROLES[group.role];
+      const tag = document.createElement('span');
+      tag.className = `group-role role-${group.role}`;
+      tag.textContent = role.label;
+      tag.title = role.hint;
+      const hint = document.createElement('span');
+      hint.className = 'visually-hidden';
+      hint.textContent = ` : ${role.hint}`;
+      tag.appendChild(hint);
+      titles.appendChild(tag);
+    }
+    const status = document.createElement('span');
+    status.className = 'group-status';
+    titles.appendChild(status);
+    summary.append(icon, titles);
+
+    const intro = document.createElement('p');
+    intro.className = 'group-intro';
+    intro.textContent = group.intro;
+    box.append(summary, intro);
+    for (const lever of group.levers) box.appendChild(buildLever(lever));
+    container.appendChild(box);
+    groupSummaries.push({ group, status });
+    return box;
+  }
+
   function buildLevers() {
     const globalBox = document.getElementById('global-levers');
-    const title = document.createElement('h3');
-    title.textContent = 'Rythme et incertitude';
-    globalBox.appendChild(title);
-    for (const lever of window.GLOBAL_LEVERS) globalBox.appendChild(buildLever(lever));
+    buildGroup(globalBox, {
+      id: 'rhythm',
+      title: 'Rythme et incertitude',
+      icon: 'clock',
+      intro: 'Quand les mesures font effet, et à quel point le climat réagit.',
+      levers: window.GLOBAL_LEVERS,
+      summaryless: true,
+    });
 
     const groupsBox = document.getElementById('lever-groups');
     for (const group of window.LEVER_GROUPS) {
-      const box = document.createElement('div');
-      box.className = `lever-group group-${group.id}`;
-      const h = document.createElement('h3');
-      h.textContent = group.title;
-      const intro = document.createElement('p');
-      intro.className = 'muted';
-      intro.textContent = group.intro;
-      box.append(h, intro);
-      for (const lever of group.levers) box.appendChild(buildLever(lever));
-      groupsBox.appendChild(box);
+      const box = buildGroup(groupsBox, group);
+      // L'arrêt brutal de la géo-ingénierie va avec sa catégorie.
+      if (group.id === 'geo') box.appendChild(document.getElementById('geo-stop-box'));
     }
 
     document.getElementById('geo-stop').addEventListener('change', (e) => {
@@ -407,6 +459,21 @@
       cost.textContent =
         item.central < 0 ? `Économie en 2050 : ≈ ${money(item.central)} par an` : `Coût en 2050 : ≈ ${money(item.central)} par an`;
       cost.className = 'lever-cost' + (item.central < 0 ? ' saving' : '');
+    }
+
+    // Résumé de chaque catégorie : leviers actifs et coût
+    for (const { group, status } of groupSummaries) {
+      if (group.summaryless) continue;
+      const active = group.levers.filter((l) => l.id !== 'geoStartYear' && levers[l.id] !== DEFAULT_LEVERS[l.id]);
+      if (!active.length) {
+        status.textContent = 'Aucun levier activé';
+        status.className = 'group-status';
+        continue;
+      }
+      const cost = active.reduce((sum, l) => sum + (byId[l.id] ? byId[l.id].central : 0), 0);
+      const costText = Math.abs(cost) < 0.5 ? '' : cost < 0 ? ` · économie ≈ ${money(cost)}/an` : ` · ≈ ${money(cost)}/an`;
+      status.textContent = `${active.length} sur ${group.levers.filter((l) => l.id !== 'geoStartYear').length} activé${active.length > 1 ? 's' : ''}${costText}`;
+      status.className = 'group-status on';
     }
 
     // Encart des résultats

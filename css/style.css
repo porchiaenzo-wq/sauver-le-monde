@@ -25,6 +25,12 @@
   --risk-4: #8f1d21;
   --risk-ink: #1f2a2a;
   --risk-ink-strong: #ffffff; /* texte sur les niveaux 3 et 4 */
+  /* Couleurs des catégories de leviers */
+  --group-rhythm: #55615f;
+  --group-energy: #8a5a00;
+  --group-land: #2f6b37;
+  --group-removal: #1d5f91;
+  --group-geo: #7a2f96;
   color-scheme: light;
 }
 
@@ -53,6 +59,11 @@
     --risk-4: #f0857a;
     --risk-ink: #0b1514;
     --risk-ink-strong: #0b1514;
+    --group-rhythm: #a3b0ad;
+    --group-energy: #f0b14a;
+    --group-land: #7fcf8c;
+    --group-removal: #7cb8e6;
+    --group-geo: #d29bf0;
     color-scheme: dark;
   }
 }
@@ -118,14 +129,55 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
 @media (max-width: 900px) {
   .levers { position: static; max-height: none; }
 }
-.lever-group { border-top: 1px solid var(--line); padding-top: 16px; margin-top: 16px; }
+.lever-group {
+  --group: var(--accent);
+  margin-top: 14px; padding: 0 14px 4px; border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--group) 30%, var(--line));
+  border-left: 5px solid var(--group);
+  background: color-mix(in srgb, var(--group) 6%, var(--surface));
+}
+.group-rhythm { --group: var(--group-rhythm); }
+.group-energy { --group: var(--group-energy); }
+.group-land { --group: var(--group-land); }
+.group-removal { --group: var(--group-removal); }
+/* La géo-ingénierie est à part : bordure en pointillés pour signaler son côté extravagant */
+.group-geo { --group: var(--group-geo); border-style: dashed; border-left-style: solid; }
+.group-head {
+  display: flex; gap: 12px; align-items: center; cursor: pointer; list-style: none;
+  padding: 12px 0; min-height: 44px;
+}
+.group-head::-webkit-details-marker { display: none; }
+.group-head::after {
+  content: '▾'; margin-left: auto; color: var(--group); font-size: 1.1rem; transition: transform 0.2s;
+}
+.lever-group:not([open]) .group-head::after { transform: rotate(-90deg); }
+.lever-group:not([open]) { padding-bottom: 0; }
+.group-icon {
+  flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+  color: var(--group); background: color-mix(in srgb, var(--group) 15%, var(--surface));
+}
+.group-icon svg { width: 20px; height: 20px; }
+.group-titles { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.group-titles h3 { margin: 0; color: var(--group); }
+.group-role {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 2px 8px; border-radius: 99px; color: var(--surface); background: var(--group);
+}
+.group-status { flex-basis: 100%; font-size: 0.8rem; color: var(--ink-2); }
+.group-status.on { color: var(--group); font-weight: 600; }
+.group-intro { font-size: 0.9rem; color: var(--ink-2); margin-bottom: 14px; }
+.lever-group input[type='range'] { accent-color: var(--group); }
+.lever-group .lever-value { color: var(--group); }
+.lever-group summary:focus-visible { outline-offset: 0; border-radius: 8px; }
+.geo-stop { margin-bottom: 12px; }
 .lever { margin-bottom: 18px; }
 .lever-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .lever-head label { font-weight: 600; }
 .lever-value { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; font-size: 0.9rem; }
 input[type='range'] { width: 100%; accent-color: var(--accent); min-height: 44px; margin: 0; }
-details { font-size: 0.9rem; color: var(--ink-2); }
-summary { cursor: pointer; color: var(--accent); min-height: 32px; display: flex; align-items: center; }
+/* « En savoir plus » sous chaque levier (pas les catégories, qui sont aussi des <details>) */
+.lever details { font-size: 0.9rem; color: var(--ink-2); }
+.lever summary, .impact-method summary { cursor: pointer; color: var(--accent); min-height: 32px; display: flex; align-items: center; }
 .fact { border-left: 3px solid var(--accent); padding-left: 10px; color: var(--ink); }
 
 .badge {
@@ -347,7 +399,7 @@ input[type='range']:disabled { opacity: 0.45; cursor: not-allowed; }
 .impact-list li.starting .impact-info { color: var(--badge-ambitieux); }
 .impact-bar { height: 4px; border-radius: 2px; background: var(--line); margin: 6px 0 4px; position: relative; overflow: hidden; }
 .impact-bar::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--progress, 0); background: var(--danger); border-radius: 2px; }
-.impact-method { margin-top: 8px; }
+.impact-method { margin-top: 8px; font-size: 0.9rem; color: var(--ink-2); }
 .impact-info { font-size: 0.8rem; color: var(--ink-2); }
 .impact-list li.active .impact-info { color: var(--danger); }
 
