@@ -19,6 +19,7 @@
   // Contraintes du mode défi : { locked: {levier: valeur}, limits: {levier: max} }, ou null.
   let constraints = null;
   const resultListeners = [];
+  let lastPayload = null; // dernier résultat, pour les modules qui s'abonnent après le premier calcul
   let frozen = false; // curseurs bloqués (fin du chrono)
 
   const allLevers = [...window.GLOBAL_LEVERS, ...window.LEVER_GROUPS.flatMap((g) => g.levers)];
@@ -509,7 +510,8 @@
     renderSectors(result);
     const costs = window.Costs.computeCosts(levers, 2050);
     renderCosts(costs);
-    for (const listener of resultListeners) listener(result, levers, costs);
+    lastPayload = [result, levers, costs];
+    for (const listener of resultListeners) listener(...lastPayload);
     // En défi, on n'écrit pas le scénario dans l'adresse (pas de solution à partager par erreur).
     if (!constraints) writeHash();
   }
@@ -558,6 +560,7 @@
   window.App = {
     onResult(listener) {
       resultListeners.push(listener);
+      if (lastPayload) listener(...lastPayload);
     },
     /** Démarre (ou arrête avec null) des contraintes, et remet les leviers à leur valeur de départ. */
     setConstraints(next) {
@@ -571,6 +574,12 @@
     /** Applique des valeurs de leviers en respectant les contraintes (pour montrer une solution). */
     showLevers(values) {
       levers = { ...startingLevers(), ...values, ...((constraints && constraints.locked) || {}) };
+      scheduleUpdate();
+    },
+    /** Change quelques leviers sans toucher aux autres (mode pas à pas). */
+    setLevers(values) {
+      levers = { ...levers, ...values };
+      clearPreset();
       scheduleUpdate();
     },
     /** Bloque ou débloque tous les curseurs (à la fin du chrono). */

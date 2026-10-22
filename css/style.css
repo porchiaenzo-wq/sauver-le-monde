@@ -17,6 +17,14 @@
   --badge-ambitieux: #8a5a00;
   --badge-extravagant: #8b3aa8;
   --radius: 14px;
+  /* Niveaux de risque de la carte, du plus faible au plus fort */
+  --risk-0: #e8e2cf;
+  --risk-1: #f2d27a;
+  --risk-2: #eb9a4a;
+  --risk-3: #cf5a33;
+  --risk-4: #8f1d21;
+  --risk-ink: #1f2a2a;
+  --risk-ink-strong: #ffffff; /* texte sur les niveaux 3 et 4 */
   color-scheme: light;
 }
 
@@ -38,6 +46,13 @@
     --badge-realiste: #7fcf8c;
     --badge-ambitieux: #e6b450;
     --badge-extravagant: #d29bf0;
+    --risk-0: #33413f;
+    --risk-1: #8a7a3a;
+    --risk-2: #b56a2e;
+    --risk-3: #c8472b;
+    --risk-4: #f0857a;
+    --risk-ink: #0b1514;
+    --risk-ink-strong: #0b1514;
     color-scheme: dark;
   }
 }
@@ -296,6 +311,80 @@ summary { cursor: pointer; color: var(--accent); min-height: 32px; display: flex
 .dialog-reasons { padding-left: 0; list-style: none; }
 .dialog-lesson-title { font-weight: 600; margin-bottom: 4px; }
 input[type='range']:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Carte des impacts */
+.impact-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.impact-controls label { font-weight: 600; }
+.impact-controls input { flex: 1; min-width: 160px; }
+.impact-controls output { font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+.impact-map { width: 100%; height: auto; display: block; }
+.region { stroke: var(--surface); stroke-width: 0.8; cursor: pointer; transition: fill 0.3s; }
+.region:hover, .region:focus-visible { stroke: var(--ink); stroke-width: 1.5; outline: none; }
+.region.selected { stroke: var(--ink); stroke-width: 2.2; }
+.region.risk-0, .risk-swatch.risk-0, .risk-badge.risk-0 { fill: var(--risk-0); background: var(--risk-0); }
+.region.risk-1, .risk-swatch.risk-1, .risk-badge.risk-1 { fill: var(--risk-1); background: var(--risk-1); }
+.region.risk-2, .risk-swatch.risk-2, .risk-badge.risk-2 { fill: var(--risk-2); background: var(--risk-2); }
+.region.risk-3, .risk-swatch.risk-3, .risk-badge.risk-3 { fill: var(--risk-3); background: var(--risk-3); }
+.region.risk-4, .risk-swatch.risk-4, .risk-badge.risk-4 { fill: var(--risk-4); background: var(--risk-4); }
+.impact-legend { list-style: none; padding: 0; margin: 8px 0 12px; display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.85rem; color: var(--ink-2); }
+.impact-legend li { display: flex; align-items: center; gap: 6px; }
+.risk-swatch { width: 16px; height: 12px; border-radius: 3px; display: inline-block; }
+.impact-detail { border-top: 1px solid var(--line); padding-top: 12px; }
+.impact-detail-head { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.impact-select {
+  font: inherit; font-weight: 600; min-height: 44px; padding: 6px 10px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+}
+.risk-badge { padding: 3px 12px; border-radius: 99px; font-size: 0.85rem; font-weight: 600; color: var(--risk-ink); }
+.risk-badge.risk-3, .risk-badge.risk-4 { color: var(--risk-ink-strong); }
+.impact-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.impact-list li {
+  display: flex; flex-direction: column; padding: 8px 12px; border-radius: 10px;
+  background: var(--surface-2); border-left: 4px solid var(--good);
+}
+.impact-list li.active { border-left-color: var(--danger); }
+.impact-info { font-size: 0.8rem; color: var(--ink-2); }
+.impact-list li.active .impact-info { color: var(--danger); }
+
+/* Mode découverte */
+.tour {
+  position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 30;
+  width: min(560px, calc(100% - 24px)); max-height: 55vh; overflow-y: auto;
+  background: var(--surface); color: var(--ink); border: 2px solid var(--accent);
+  border-radius: var(--radius); padding: 14px 18px 16px; box-shadow: 0 10px 30px rgb(0 0 0 / 0.25);
+}
+.tour[hidden] { display: none; }
+.tour-progress { height: 4px; border-radius: 2px; background: var(--surface-2); margin-bottom: 8px; position: relative; overflow: hidden; }
+.tour-progress::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--progress, 0); background: var(--accent); transition: width 0.3s; }
+.tour-head { display: flex; justify-content: space-between; align-items: center; }
+.tour-count { margin: 0; font-size: 0.85rem; }
+.tour-quit {
+  font: inherit; font-size: 1.1rem; min-width: 44px; min-height: 44px; border: none; background: transparent;
+  color: var(--ink-2); cursor: pointer; border-radius: 10px;
+}
+.tour-group { font-size: 0.8rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+.tour-group:empty, .tour p:empty { display: none; }
+.tour-title { font-size: 1.3rem; margin-bottom: 6px; }
+.tour-title:focus { outline: none; }
+.tour-effect { font-weight: 600; }
+.tour-live { font-size: 0.9rem; }
+/* Boutons toujours visibles en bas de la carte, même si son texte défile */
+.tour .challenge-actions {
+  position: sticky; bottom: -16px; background: var(--surface);
+  padding: 8px 0 4px; margin-bottom: -4px;
+}
+.tour-highlight {
+  outline: 3px solid var(--accent); outline-offset: 6px; border-radius: 10px;
+  scroll-margin-top: 24px; transition: outline-color 0.3s;
+}
+.tour-active .mini-result, .tour-active .challenge-clock { display: none; }
+@media (max-width: 560px) {
+  .tour { bottom: 8px; padding: 10px 14px 12px; max-height: 50vh; font-size: 0.95rem; }
+  .tour #tour-fact { display: none; }
+  .tour-title { font-size: 1.15rem; }
+}
+/* La carte du bas cache la fin de la page : on laisse de la place pour défiler. */
+.tour-active { padding-bottom: 55vh; }
 
 .footer { padding: 28px 0 48px; color: var(--ink-2); font-size: 0.9rem; }
 

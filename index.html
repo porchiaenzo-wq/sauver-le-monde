@@ -27,6 +27,7 @@
   <nav class="wrap mode-switch" aria-label="Mode de jeu">
     <button type="button" id="mode-sandbox" class="mode-button" aria-pressed="true">Bac à sable</button>
     <button type="button" id="mode-challenge" class="mode-button" aria-pressed="false">Défis chronométrés</button>
+    <button type="button" id="mode-tour" class="mode-button" aria-pressed="false">Découverte pas à pas</button>
   </nav>
 
   <section id="challenge-list" class="wrap challenge-list" aria-labelledby="challenge-list-title" hidden>
@@ -117,6 +118,33 @@
         </figure>
       </div>
 
+      <section class="panel" id="impacts" aria-labelledby="impacts-title">
+        <h3 id="impacts-title">Carte des impacts : quelles régions souffrent ?</h3>
+        <div class="impact-controls">
+          <label for="impact-year">Année</label>
+          <input type="range" id="impact-year" min="2030" max="2100" step="5" value="2100">
+          <output id="impact-year-value" for="impact-year"></output>
+        </div>
+        <div id="impact-map" class="impact-map-box"></div>
+        <ul id="impact-legend" class="impact-legend" aria-label="Légende des niveaux de risque"></ul>
+        <p id="impact-heat" class="fact"></p>
+        <div class="impact-detail" aria-live="polite">
+          <div class="impact-detail-head">
+            <label for="impact-region-select" class="visually-hidden">Choisir une région</label>
+            <select id="impact-region-select" class="impact-select"></select>
+            <span id="impact-region-level" class="risk-badge"></span>
+          </div>
+          <h4 id="impact-region-name" class="visually-hidden"></h4>
+          <p id="impact-region-intro" class="muted"></p>
+          <ul id="impact-list" class="impact-list"></ul>
+        </div>
+        <p class="muted cost-context">
+          Touche une région de la carte pour voir ses risques. Chaque risque a un seuil de réchauffement mondial
+          d’après le GIEC (2022) et les études citées : ce sont des ordres de grandeur, les dégâts augmentent
+          progressivement. La couleur indique la part des risques de la région dont le seuil est dépassé.
+        </p>
+      </section>
+
       <section class="panel" aria-labelledby="tipping-title">
         <h3 id="tipping-title">Points de bascule</h3>
         <p class="muted">
@@ -190,6 +218,28 @@
     <a href="#results-title">Voir les résultats</a>
   </div>
 
+  <!-- Mode découverte : carte d'explication en bas de l'écran -->
+  <section id="tour" class="tour" aria-labelledby="tour-title" hidden>
+    <div class="tour-progress" id="tour-progress" aria-hidden="true"></div>
+    <div class="tour-head">
+      <p id="tour-count" class="muted tour-count"></p>
+      <button type="button" id="tour-quit" class="tour-quit" aria-label="Quitter la découverte">✕</button>
+    </div>
+    <p id="tour-group" class="tour-group"></p>
+    <h2 id="tour-title" class="tour-title" tabindex="-1"></h2>
+    <p id="tour-text"></p>
+    <p id="tour-fact" class="fact"></p>
+    <p id="tour-effect" class="tour-effect"></p>
+    <p id="tour-live" class="muted tour-live" aria-live="polite"></p>
+    <div class="challenge-actions">
+      <button type="button" id="tour-prev" class="button secondary inline">Précédent</button>
+      <button type="button" id="tour-try" class="button secondary inline" aria-pressed="false">Essayer ce levier</button>
+      <button type="button" id="tour-next" class="button">Suivant</button>
+      <button type="button" id="tour-challenge" class="button" hidden>Essayer un défi</button>
+      <button type="button" id="tour-done" class="button secondary inline" hidden>Jouer librement</button>
+    </div>
+  </section>
+
   <dialog id="challenge-dialog" class="challenge-dialog" aria-labelledby="dialog-title">
     <h2 id="dialog-title"></h2>
     <p id="dialog-stars" class="dialog-stars"></p>
@@ -210,7 +260,11 @@
   <script src="js/costs.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/world-map.js"></script>
+  <script src="js/impacts.js"></script>
+  <script src="js/map.js"></script>
   <script src="js/challenges.js"></script>
   <script src="js/challenge-ui.js"></script>
+  <script src="js/tour.js"></script>
 </body>
 </html>

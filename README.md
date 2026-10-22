@@ -4,10 +4,15 @@ Un simulateur climatique en une page web. On part de l'état réel de la Terre e
 
 Toutes les données et formules viennent de sources scientifiques vérifiées (GIEC, Global Carbon Project, NOAA, NASA, PNUE, AIE, études publiées dans *Science*, *Nature*, *PNAS*…). La liste complète est affichée en bas de la page et dans `js/sources.js`.
 
-## Les deux modes
+## Les trois modes
 
 - **Bac à sable** : tous les leviers sont libres, avec des scénarios prêts à l'emploi.
+- **Découverte pas à pas** : pour les débutants, une visite guidée explique la page puis chaque levier un par un, avec son effet calculé (seul et à fond) et un bouton pour l'essayer.
 - **Défis chronométrés** : 6 défis (de facile à difficile) à réussir avant la fin du chrono, avec des contraintes (géo-ingénierie interdite, transition lente, climat plus sensible…). Chaque défi a aussi un budget (coût en 2050) : tout pousser au maximum coûte trop cher, il faut choisir les mesures les plus efficaces pour leur prix. On gagne jusqu'à 3 étoiles : objectif atteint, plus de la moitié du temps restant, et plan très économe. Les défis sont décrits dans `js/challenges.js`, et les tests vérifient que chacun a une solution.
+
+## La carte des impacts
+
+Une carte du monde en 14 grandes régions montre le niveau de risque de chacune selon le réchauffement de l'année choisie (de 2030 à 2100). Chaque région liste ses risques principaux, avec le seuil de réchauffement à partir duquel ils deviennent élevés selon le GIEC (2022) et les études citées (`js/impacts.js`). Le fond de carte vient de Natural Earth (domaine public) ; il est fabriqué par `tools/build-map.mjs`.
 
 ## Le coût des mesures
 
@@ -53,9 +58,15 @@ Les tests vérifient que le modèle retrouve les observations et que chaque levi
 | `js/costs.js` | Le coût de chaque mesure |
 | `js/sources.js` | La bibliographie |
 | `js/charts.js` | Les graphiques |
+| `js/world-map.js` | Le fond de carte (fichier généré) |
+| `js/impacts.js` | Les impacts par région et leurs seuils |
+| `js/map.js` | La carte des impacts |
+| `js/tour.js` | Le mode découverte pas à pas |
 | `js/app.js` | L'interface (curseurs, résultats) |
 | `js/challenges.js` | Les défis : objectifs, contraintes, chrono, solution |
 | `js/challenge-ui.js` | Le déroulement d'un défi (chrono, validation, étoiles) |
 | `tests/model.test.js` | Les tests du modèle |
 | `tests/challenges.test.js` | Les tests des défis |
 | `tests/costs.test.js` | Les tests des coûts |
+| `tests/impacts.test.js` | Les tests de la carte des impacts |
+| `tools/build-map.mjs` | Fabrique le fond de carte |
