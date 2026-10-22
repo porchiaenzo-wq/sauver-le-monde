@@ -6,7 +6,8 @@
 (function () {
   'use strict';
 
-  const { WORLD_MAP, REGION_IMPACTS, LEVELS, hotExtremeFactor, regionLevel } = window;
+  const { WORLD_MAP, REGION_IMPACTS, LEVELS, GRAVITY_LABELS, hotExtremeFactor, impactProgress, impactState, regionLevel } =
+    window;
   const SVG_NS = 'http://www.w3.org/2000/svg';
 
   const fmt = (v, d = 1) => v.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -102,20 +103,31 @@
     const badge = $('impact-region-level');
     badge.textContent = `Risque ${LEVELS[level].label.toLowerCase()}`;
     badge.className = `risk-badge risk-${level}`;
-    $('impact-region-intro').textContent = region.intro;
+    $('impact-region-intro').textContent =
+      region.intro +
+      (region.vulnerability > 1
+        ? ' Le GIEC la classe parmi les régions les plus vulnérables (populations exposées, moyens limités pour s’adapter) : ses risques comptent davantage.'
+        : '');
 
     $('impact-list').replaceChildren(
       ...region.impacts.map((impact) => {
         const li = document.createElement('li');
-        const active = t >= impact.threshold;
-        li.className = active ? 'active' : 'avoided';
+        const progress = impactProgress(impact, t);
+        li.className = progress === 0 ? 'avoided' : t < impact.threshold ? 'starting' : 'active';
+        li.style.setProperty('--progress', `${Math.round(progress * 100)}%`);
         const text = document.createElement('span');
         text.textContent = impact.text;
         const info = document.createElement('span');
         info.className = 'impact-info';
         const names = impact.sources.map((s) => window.SOURCES[s].authors.split(',')[0]).join(', ');
-        info.textContent = `${active ? 'Risque élevé' : 'Évité'} · à partir de ≈ ${fmt(impact.threshold)} °C · ${names}`;
-        li.append(text, info);
+        const gravity = '●'.repeat(impact.weight) + '○'.repeat(3 - impact.weight);
+        info.textContent =
+          `${impactState(impact, t)} · seuil ≈ ${fmt(impact.threshold)} °C · gravité ${gravity} ` +
+          `(${GRAVITY_LABELS[impact.weight]}) · ${names}`;
+        const bar = document.createElement('span');
+        bar.className = 'impact-bar';
+        bar.setAttribute('aria-hidden', 'true');
+        li.append(text, bar, info);
         return li;
       })
     );

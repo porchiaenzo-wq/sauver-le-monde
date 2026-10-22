@@ -343,6 +343,11 @@ input[type='range']:disabled { opacity: 0.45; cursor: not-allowed; }
   background: var(--surface-2); border-left: 4px solid var(--good);
 }
 .impact-list li.active { border-left-color: var(--danger); }
+.impact-list li.starting { border-left-color: var(--warn); }
+.impact-list li.starting .impact-info { color: var(--badge-ambitieux); }
+.impact-bar { height: 4px; border-radius: 2px; background: var(--line); margin: 6px 0 4px; position: relative; overflow: hidden; }
+.impact-bar::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--progress, 0); background: var(--danger); border-radius: 2px; }
+.impact-method { margin-top: 8px; }
 .impact-info { font-size: 0.8rem; color: var(--ink-2); }
 .impact-list li.active .impact-info { color: var(--danger); }
 

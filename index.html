@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- ?v=… : numéro de version, à augmenter à chaque mise en ligne pour que les navigateurs
        rechargent les fichiers au lieu de garder l'ancienne version en mémoire. -->
-  <link rel="stylesheet" href="css/style.css?v=6">
+  <link rel="stylesheet" href="css/style.css?v=7">
 </head>
 <body>
   <header class="hero">
@@ -141,10 +141,20 @@
           <ul id="impact-list" class="impact-list"></ul>
         </div>
         <p class="muted cost-context">
-          Touche une région de la carte pour voir ses risques. Chaque risque a un seuil de réchauffement mondial
-          d’après le GIEC (2022) et les études citées : ce sont des ordres de grandeur, les dégâts augmentent
-          progressivement. La couleur indique la part des risques de la région dont le seuil est dépassé.
+          Touche une région de la carte pour voir ses risques. Les seuils de réchauffement viennent du GIEC (2022)
+          et des études citées ; ce sont des ordres de grandeur.
         </p>
+        <details class="impact-method">
+          <summary>Comment la couleur est calculée</summary>
+          <p>
+            C’est un choix de présentation, pour rendre la carte lisible : il n’existe pas de « note » officielle des régions.
+            Chaque risque monte progressivement, à partir de 0,5 °C avant son seuil jusqu’à son plein effet 1,5 °C après
+            (comme les « braises » des figures du GIEC). Il compte selon sa gravité : ●●● vies menacées ou dégâts
+            irréversibles, ●●○ dégâts majeurs, ●○○ dégâts en partie évitables en s’adaptant. Enfin, les régions que le GIEC
+            désigne comme les plus vulnérables (Afrique, Asie du Sud, Amérique centrale et du Sud, Arctique, petites îles)
+            comptent un peu plus (× 1,2 ; × 1,1 pour l’Océanie, qui mêle l’Australie et des petites îles).
+          </p>
+        </details>
       </section>
 
       <section class="panel" aria-labelledby="tipping-title">
@@ -211,7 +221,7 @@
   </section>
 
   <footer class="wrap footer">
-    <p class="version">Version 6 · carte des impacts et mode découverte</p>
+    <p class="version">Version 7 · carte des impacts nuancée</p>
     <p>Projet éducatif. Modèle libre et vérifiable : le code est sur GitHub. Pour aller plus loin, essaie <a href="https://www.climateinteractive.org/en-roads/">En-ROADS</a> (Climate Interactive et MIT Sloan).</p>
   </footer>
 
@@ -257,17 +267,17 @@
     </div>
   </dialog>
 
-  <script src="js/sources.js?v=6"></script>
-  <script src="js/levers.js?v=6"></script>
-  <script src="js/model.js?v=6"></script>
-  <script src="js/costs.js?v=6"></script>
-  <script src="js/charts.js?v=6"></script>
-  <script src="js/app.js?v=6"></script>
-  <script src="js/world-map.js?v=6"></script>
-  <script src="js/impacts.js?v=6"></script>
-  <script src="js/map.js?v=6"></script>
-  <script src="js/challenges.js?v=6"></script>
-  <script src="js/challenge-ui.js?v=6"></script>
-  <script src="js/tour.js?v=6"></script>
+  <script src="js/sources.js?v=7"></script>
+  <script src="js/levers.js?v=7"></script>
+  <script src="js/model.js?v=7"></script>
+  <script src="js/costs.js?v=7"></script>
+  <script src="js/charts.js?v=7"></script>
+  <script src="js/app.js?v=7"></script>
+  <script src="js/world-map.js?v=7"></script>
+  <script src="js/impacts.js?v=7"></script>
+  <script src="js/map.js?v=7"></script>
+  <script src="js/challenges.js?v=7"></script>
+  <script src="js/challenge-ui.js?v=7"></script>
+  <script src="js/tour.js?v=7"></script>
 </body>
 </html>

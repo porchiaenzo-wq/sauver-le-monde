@@ -33,7 +33,19 @@ test('le risque ne baisse jamais quand la température monte', () => {
       previous = level;
     }
     assert.equal(regionLevel(id, 1), 0, `${id} : pas de risque élevé sous 1 °C`);
-    assert.equal(regionLevel(id, 4.5), 4, `${id} : risque extrême à 4,5 °C`);
+    assert.ok(regionLevel(id, 4.5) >= 3, `${id} : risque au moins très élevé à 4,5 °C`);
+  }
+});
+
+test('la carte est nuancée : à 2,7 °C, toutes les régions ne sont pas au même niveau', () => {
+  const levels = new Set(Object.keys(REGION_IMPACTS).map((id) => regionLevel(id, 2.7)));
+  assert.ok(levels.size >= 3, `niveaux : ${[...levels]}`);
+});
+
+test('chaque risque a une gravité de 1 à 3, et chaque région une vulnérabilité', () => {
+  for (const [id, region] of Object.entries(REGION_IMPACTS)) {
+    assert.ok(region.vulnerability >= 1 && region.vulnerability <= 1.2, id);
+    for (const impact of region.impacts) assert.ok([1, 2, 3].includes(impact.weight), `${id} : ${impact.text}`);
   }
 });
 
