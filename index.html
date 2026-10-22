@@ -23,6 +23,42 @@
     </div>
   </header>
 
+  <!-- Choix du mode : bac à sable (libre) ou défis chronométrés -->
+  <nav class="wrap mode-switch" aria-label="Mode de jeu">
+    <button type="button" id="mode-sandbox" class="mode-button" aria-pressed="true">Bac à sable</button>
+    <button type="button" id="mode-challenge" class="mode-button" aria-pressed="false">Défis chronométrés</button>
+  </nav>
+
+  <section id="challenge-list" class="wrap challenge-list" aria-labelledby="challenge-list-title" hidden>
+    <h2 id="challenge-list-title">Choisis un défi</h2>
+    <p class="muted">
+      Règle les leviers pour atteindre l’objectif avant la fin du chrono, puis appuie sur « Valider mon plan ».
+      ★ objectif atteint · ★ plus de la moitié du temps restant · ★ peu de leviers touchés.
+    </p>
+    <ul id="challenge-cards" class="challenge-cards"></ul>
+  </section>
+
+  <section id="challenge-bar" class="wrap challenge-bar panel" aria-labelledby="challenge-name" hidden>
+    <div class="challenge-bar-head">
+      <div>
+        <h2 id="challenge-name"></h2>
+        <p id="challenge-pitch" class="muted"></p>
+      </div>
+      <p class="challenge-timer-box">
+        <span class="visually-hidden">Temps restant :</span>
+        <span id="challenge-timer" class="challenge-timer" role="timer">0:00</span>
+      </p>
+    </div>
+    <ul id="challenge-goals" class="challenge-goals" aria-live="polite"></ul>
+    <p id="challenge-levers" class="muted"></p>
+    <p id="challenge-feedback" class="challenge-feedback" aria-live="polite"></p>
+    <div class="challenge-actions">
+      <button type="button" id="challenge-validate" class="button">Valider mon plan</button>
+      <button type="button" id="challenge-retry" class="button" hidden>Rejouer</button>
+      <button type="button" id="challenge-quit" class="button secondary inline">Abandonner</button>
+    </div>
+  </section>
+
   <main class="wrap layout">
     <!-- Colonne de gauche : les leviers -->
     <section class="panel levers" aria-labelledby="levers-title">
@@ -136,10 +172,26 @@
     <a href="#results-title">Voir les résultats</a>
   </div>
 
+  <dialog id="challenge-dialog" class="challenge-dialog" aria-labelledby="dialog-title">
+    <h2 id="dialog-title"></h2>
+    <p id="dialog-stars" class="dialog-stars"></p>
+    <p id="dialog-summary"></p>
+    <ul id="dialog-reasons" class="dialog-reasons"></ul>
+    <p class="dialog-lesson-title">Ce qu’il faut retenir</p>
+    <p id="dialog-lesson" class="fact"></p>
+    <div class="challenge-actions">
+      <button type="button" id="dialog-retry" class="button">Rejouer</button>
+      <button type="button" id="dialog-solution" class="button secondary inline">Voir une solution</button>
+      <button type="button" id="dialog-other" class="button secondary inline">Autre défi</button>
+    </div>
+  </dialog>
+
   <script src="js/sources.js"></script>
   <script src="js/levers.js"></script>
   <script src="js/model.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/challenges.js"></script>
+  <script src="js/challenge-ui.js"></script>
 </body>
 </html>

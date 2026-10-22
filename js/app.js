@@ -16,6 +16,10 @@
   // Scénario de référence « on ne change rien », recalculé seulement si la sensibilité change.
   let baseline = null;
   let baselineSensitivity = null;
+  // Contraintes du mode défi : { locked: {levier: valeur}, limits: {levier: max} }, ou null.
+  let constraints = null;
+  const resultListeners = [];
+  let frozen = false; // curseurs bloqués (fin du chrono)
 
   const allLevers = [...window.GLOBAL_LEVERS, ...window.LEVER_GROUPS.flatMap((g) => g.levers)];
   const inputs = {};
@@ -125,11 +129,27 @@
   }
 
   function syncInputs() {
+    const locked = (constraints && constraints.locked) || {};
+    const limits = (constraints && constraints.limits) || {};
     for (const { input, value, lever } of Object.values(inputs)) {
+      const isLocked = lever.id in locked;
+      const max = lever.id in limits ? Math.min(lever.max, limits[lever.id]) : lever.max;
+      input.max = max;
+      input.disabled = isLocked || frozen;
       input.value = levers[lever.id];
-      value.textContent = lever.format(Number(levers[lever.id]));
+      let text = lever.format(Number(levers[lever.id]));
+      if (isLocked) text += ' · bloqué';
+      else if (max < lever.max) text += ` · max ${lever.format(max)}`;
+      value.textContent = text;
     }
-    document.getElementById('geo-stop').checked = levers.geoStopYear != null;
+    const geoStop = document.getElementById('geo-stop');
+    geoStop.checked = levers.geoStopYear != null;
+    geoStop.disabled = frozen || 'stratosphericAerosols' in locked;
+  }
+
+  /** Valeurs de départ : par défaut, avec les leviers bloqués du défi en cours. */
+  function startingLevers() {
+    return { ...DEFAULT_LEVERS, ...((constraints && constraints.locked) || {}) };
   }
 
   // ---------------------------------------------------------------------------
@@ -194,6 +214,7 @@
     const box = document.getElementById('verdict');
     box.className = `verdict panel verdict-${v.level}`;
     const warnings = [];
+    const notes = [];
     const geoUsed = levers.stratosphericAerosols + levers.cloudBrightening + levers.spaceSunshade > 0;
     if (geoUsed) {
       warnings.push('Tu utilises la géo-ingénierie solaire : elle cache le réchauffement mais ne retire pas le CO₂. Les océans continuent de s’acidifier.');
@@ -201,7 +222,7 @@
     // Effet de masque des aérosols : moins de charbon = moins de particules qui renvoient le soleil.
     const t2045 = (r) => r.years.find((y) => y.year === 2045).temperature;
     if (baseline && result !== baseline && t2045(result) > t2045(baseline) + 0.02) {
-      warnings.push(
+      notes.push(
         'Pourquoi ça chauffe un peu plus au début ? La fumée des centrales à charbon et des usines contient des particules qui renvoient une partie du soleil vers l’espace. En les fermant, on perd ce « parasol » : c’est un effet réel, décrit par le GIEC. Il disparaît ensuite, car le CO₂ évité, lui, compte pendant des siècles.'
       );
     }
@@ -220,6 +241,12 @@
       wp.className = 'warning';
       wp.textContent = w;
       box.appendChild(wp);
+    }
+    for (const n of notes) {
+      const np = document.createElement('p');
+      np.className = 'fact';
+      np.textContent = n;
+      box.appendChild(np);
     }
   }
 
@@ -408,7 +435,9 @@
     renderCharts(result);
     renderTipping(result);
     renderSectors(result);
-    writeHash();
+    for (const listener of resultListeners) listener(result, levers);
+    // En défi, on n'écrit pas le scénario dans l'adresse (pas de solution à partager par erreur).
+    if (!constraints) writeHash();
   }
 
   /** Le scénario est enregistré dans l'adresse de la page (#cleanPower=0.9&…) pour pouvoir le partager. */
@@ -434,7 +463,7 @@
 
   function setupButtons() {
     document.getElementById('reset').addEventListener('click', () => {
-      levers = { ...DEFAULT_LEVERS };
+      levers = startingLevers();
       clearPreset();
       scheduleUpdate();
     });
@@ -450,6 +479,33 @@
     // Redessine les graphiques si l'utilisateur passe en mode sombre.
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', scheduleUpdate);
   }
+
+  /** Ce que le mode défi (js/challenge-ui.js) peut piloter. */
+  window.App = {
+    onResult(listener) {
+      resultListeners.push(listener);
+    },
+    /** Démarre (ou arrête avec null) des contraintes, et remet les leviers à leur valeur de départ. */
+    setConstraints(next) {
+      constraints = next;
+      levers = startingLevers();
+      clearPreset();
+      document.body.classList.toggle('challenge-active', Boolean(next));
+      if (!next) writeHash();
+      scheduleUpdate();
+    },
+    /** Applique des valeurs de leviers en respectant les contraintes (pour montrer une solution). */
+    showLevers(values) {
+      levers = { ...startingLevers(), ...values, ...((constraints && constraints.locked) || {}) };
+      scheduleUpdate();
+    },
+    /** Bloque ou débloque tous les curseurs (à la fin du chrono). */
+    freeze(value) {
+      frozen = value;
+      document.getElementById('reset').disabled = value;
+      scheduleUpdate();
+    },
+  };
 
   buildPresets();
   buildLevers();

@@ -4,6 +4,11 @@ Un simulateur climatique en une page web. On part de l'état réel de la Terre e
 
 Toutes les données et formules viennent de sources scientifiques vérifiées (GIEC, Global Carbon Project, NOAA, NASA, PNUE, AIE, études publiées dans *Science*, *Nature*, *PNAS*…). La liste complète est affichée en bas de la page et dans `js/sources.js`.
 
+## Les deux modes
+
+- **Bac à sable** : tous les leviers sont libres, avec des scénarios prêts à l'emploi.
+- **Défis chronométrés** : 6 défis (de facile à difficile) à réussir avant la fin du chrono, avec des contraintes (géo-ingénierie interdite, transition lente, climat plus sensible…). On gagne jusqu'à 3 étoiles : objectif atteint, plus de la moitié du temps restant, et peu de leviers touchés. Les défis sont décrits dans `js/challenges.js`, et les tests vérifient que chacun a une solution.
+
 ## Ouvrir la page
 
 - **Sur ton ordinateur** : double-clique sur `index.html`. Aucune installation n'est nécessaire.
@@ -44,4 +49,7 @@ Les tests vérifient que le modèle retrouve les observations et que chaque levi
 | `js/sources.js` | La bibliographie |
 | `js/charts.js` | Les graphiques |
 | `js/app.js` | L'interface (curseurs, résultats) |
+| `js/challenges.js` | Les défis : objectifs, contraintes, chrono, solution |
+| `js/challenge-ui.js` | Le déroulement d'un défi (chrono, validation, étoiles) |
 | `tests/model.test.js` | Les tests du modèle |
+| `tests/challenges.test.js` | Les tests des défis |

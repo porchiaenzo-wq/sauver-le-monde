@@ -220,4 +220,68 @@ summary { cursor: pointer; color: var(--accent); min-height: 32px; display: flex
   body { padding-bottom: 72px; }
 }
 
+/* Mode défi */
+.mode-switch { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.mode-button {
+  font: inherit; font-weight: 600; cursor: pointer; min-height: 44px; padding: 8px 18px;
+  border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+}
+.mode-button[aria-pressed='true'] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+.challenge-list { margin-bottom: 20px; }
+.challenge-cards {
+  list-style: none; padding: 0; margin: 0;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;
+}
+.challenge-card { display: flex; flex-direction: column; }
+.challenge-card .button { margin-top: auto; }
+.challenge-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.level { font-size: 0.75rem; font-weight: 600; padding: 2px 10px; border-radius: 99px; border: 1px solid currentColor; }
+.level-1 { color: var(--good); }
+.level-2 { color: var(--warn); }
+.level-3 { color: var(--danger); }
+.stars { color: var(--warn); letter-spacing: 2px; }
+
+.challenge-bar {
+  position: sticky; top: 0; z-index: 5; margin-bottom: 20px;
+  border-width: 2px; border-color: var(--accent);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.08);
+}
+.challenge-bar h2 { margin-bottom: 4px; }
+.challenge-bar-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.challenge-timer-box { margin: 0; }
+.challenge-timer {
+  font-family: Fraunces, Georgia, serif; font-size: 2.4rem; font-weight: 700;
+  font-variant-numeric: tabular-nums; color: var(--accent);
+}
+.challenge-timer.urgent { color: var(--danger); }
+.challenge-goals { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 4px; }
+.challenge-goals li { display: flex; gap: 8px; align-items: baseline; }
+.goal-mark { font-weight: 700; width: 1.2em; }
+.challenge-goals .met .goal-mark { color: var(--good); }
+.challenge-goals .unmet .goal-mark { color: var(--danger); }
+.challenge-feedback { color: var(--warn); font-weight: 500; min-height: 1.5em; margin-bottom: 8px; }
+.challenge-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.button.secondary.inline { width: auto; margin-top: 0; }
+.challenge-active .presets, .challenge-active #share, .challenge-active #share-status { display: none; }
+@media (max-width: 560px) {
+  .challenge-bar { padding: 12px 14px; }
+  .challenge-bar #challenge-pitch, .challenge-bar #challenge-levers { display: none; }
+  .challenge-timer { font-size: 1.8rem; }
+  .challenge-goals { font-size: 0.9rem; }
+}
+
+.challenge-dialog {
+  max-width: min(520px, calc(100% - 32px)); border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); color: var(--ink); padding: 24px;
+}
+.challenge-dialog::backdrop { background: rgb(0 0 0 / 0.5); }
+.dialog-stars { font-size: 2.2rem; color: var(--warn); letter-spacing: 4px; margin: 0; }
+.dialog-reasons { padding-left: 0; list-style: none; }
+.dialog-lesson-title { font-weight: 600; margin-bottom: 4px; }
+input[type='range']:disabled { opacity: 0.45; cursor: not-allowed; }
+
 .footer { padding: 28px 0 48px; color: var(--ink-2); font-size: 0.9rem; }
+
+/* En défi, le bandeau du chrono reste en haut : le panneau des leviers défile normalement. */
+.challenge-active .levers { position: static; max-height: none; }
