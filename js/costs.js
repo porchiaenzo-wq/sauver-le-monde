@@ -109,27 +109,24 @@
     'stopDeforestation', 'plantDiet', 'methaneCut', 'reforestation', 'rockWeathering', 'directCapture',
   ];
 
-  /** Émissions nettes d'une année en Gt d'équivalent CO2 (CO2 + méthane). */
-  function netEmissions(levers, year) {
-    const e = Model.futureEmissions(levers, year);
+  /** Émissions nettes en Gt d'équivalent CO2 (CO2 + méthane), à partir du détail des émissions. */
+  function netFromDetail(e) {
     return e.fossil + e.landUse - e.removals + e.methane * METHANE_GT_CO2EQ_2025;
   }
 
   /**
-   * Coût de chaque mesure pour une année donnée.
-   * Retourne { items: [{ id, tonnes, low, central, high }], total: { low, central, high }, gdpShare }
-   * en milliards de dollars par an.
+   * Calcul commun. emit(levers) donne le détail des émissions ; geoCooling(levers, id) le refroidissement
+   * (W/m²) obtenu par une technique de géo-ingénierie seule.
    */
-  function computeCosts(inputLevers, year) {
-    const levers = Object.assign({}, Model.DEFAULT_LEVERS, inputLevers || {});
+  function costsWith(levers, emit, geoCooling) {
     const items = [];
 
     // Mesures qui évitent des émissions : tonnes × coût par tonne
     let current = { ...Model.DEFAULT_LEVERS, targetYear: levers.targetYear };
-    let previous = netEmissions(current, year);
+    let previous = netFromDetail(emit(current));
     for (const id of ABATEMENT_ORDER) {
       current = { ...current, [id]: levers[id] };
-      const now = netEmissions(current, year);
+      const now = netFromDetail(emit(current));
       const tonnes = previous - now; // Gt évitées par cette mesure
       previous = now;
       if (Math.abs(tonnes) < 1e-9) continue;
@@ -137,14 +134,13 @@
       items.push({ id, tonnes, low: tonnes * c.low, central: tonnes * c.central, high: tonnes * c.high });
     }
 
-    // Géo-ingénierie solaire : coût par an selon l'effet obtenu cette année
+    // Géo-ingénierie solaire : coût par an selon l'effet obtenu
     for (const id of ['stratosphericAerosols', 'cloudBrightening', 'spaceSunshade']) {
       if (!levers[id]) continue;
-      const only = { ...Model.DEFAULT_LEVERS, geoStartYear: levers.geoStartYear, geoStopYear: levers.geoStopYear, [id]: levers[id] };
-      const forcing = -Model.geoengineeringForcing(only, year); // W/m² de refroidissement
+      const forcing = geoCooling(levers, id); // W/m² de refroidissement
       if (forcing <= 0) continue;
       const c = COSTS[id];
-      const amount = c.unit === 'sunshade' ? (forcing / 240) * 100 : forcing; // % du soleil ou W/m²
+      const amount = c.unit === 'sunshade' ? (forcing / Model.ABSORBED_SUNLIGHT) * 100 : forcing; // % du soleil ou W/m²
       items.push({ id, tonnes: 0, low: amount * c.low, central: amount * c.central, high: amount * c.high });
     }
 
@@ -152,7 +148,37 @@
       (t, i) => ({ low: t.low + i.low, central: t.central + i.central, high: t.high + i.high }),
       { low: 0, central: 0, high: 0 }
     );
-    return { year, items, total, gdpShare: total.central / WORLD_GDP_BILLIONS };
+    return { items, total, gdpShare: total.central / WORLD_GDP_BILLIONS };
+  }
+
+  /**
+   * Coût de chaque mesure pour une année donnée du simulateur.
+   * Retourne { items: [{ id, tonnes, low, central, high }], total: { low, central, high }, gdpShare }
+   * en milliards de dollars par an.
+   */
+  function computeCosts(inputLevers, year) {
+    const levers = Object.assign({}, Model.DEFAULT_LEVERS, inputLevers || {});
+    const result = costsWith(
+      levers,
+      (l) => Model.futureEmissions(l, year),
+      (l, id) => {
+        const only = { ...Model.DEFAULT_LEVERS, geoStartYear: l.geoStartYear, geoStopYear: l.geoStopYear, [id]: l[id] };
+        return -Model.geoengineeringForcing(only, year);
+      }
+    );
+    return { year, ...result };
+  }
+
+  /**
+   * Coût par an de mesures déjà déployées à ces valeurs (pour le jeu, qui gère lui-même le déploiement).
+   */
+  function computeCostsDeployed(inputLevers) {
+    const levers = Object.assign({}, Model.DEFAULT_LEVERS, inputLevers || {});
+    return costsWith(
+      levers,
+      (l) => Model.emissionsAt(l, 1, 1),
+      (l, id) => (id === 'spaceSunshade' ? l[id] * Model.ABSORBED_SUNLIGHT : l[id])
+    );
   }
 
   /** Coût par tonne lisible, pour la fiche d'une mesure. */
@@ -168,7 +194,7 @@
     return `${n(c.low)} à ${n(c.high)} milliards $ par an pour 1 % du soleil bloqué (≈ ${n(c.central)})`;
   }
 
-  const api = { COSTS, computeCosts, describeUnitCost, WORLD_GDP_BILLIONS };
+  const api = { COSTS, computeCosts, computeCostsDeployed, describeUnitCost, WORLD_GDP_BILLIONS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Costs = api;
 })(typeof window !== 'undefined' ? window : globalThis);

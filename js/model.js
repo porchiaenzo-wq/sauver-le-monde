@@ -235,6 +235,14 @@
     const r = rampProgress(year, levers.targetYear);
     // Les forêts plantées mettent une dizaine d'années à pousser.
     const rForest = rampProgress(year, levers.targetYear, 10);
+    return emissionsAt(levers, r, rForest);
+  }
+
+  /**
+   * Émissions quand chaque mesure est appliquée à la fraction r de sa valeur (rForest pour le reboisement).
+   * Avec r = 1, les leviers sont pris tels quels : c'est ce qu'utilise le jeu, qui gère lui-même le déploiement.
+   */
+  function emissionsAt(levers, r, rForest) {
     const s = SECTOR_EMISSIONS_2025;
 
     const demand = 1 - levers.energySaving * r;
@@ -304,111 +312,137 @@
    */
   function simulate(inputLevers) {
     const levers = Object.assign({}, DEFAULT_LEVERS, inputLevers || {});
-    const lambda = F2X / levers.climateSensitivity; // rétroaction climatique (W/m²/°C)
+    const state = createState(levers.climateSensitivity);
+    for (let year = PRESENT_YEAR + 1; year <= END_YEAR; year++) {
+      stepYear(state, futureEmissions(levers, year), geoengineeringForcing(levers, year));
+    }
+    return summarize(state.years, state.tPresent, state.peakSinceToday, state.co2ForcingPresent);
+  }
 
-    const pools = [0, 0, 0, 0]; // carbone en excès dans l'air, par réservoir (GtC)
+  /**
+   * État du climat, prêt à avancer année par année. Les années 1850 à 2025 rejouent l'histoire réelle.
+   * Le jeu (js/game-engine.js) s'en sert pour faire avancer le monde selon les décisions du joueur.
+   */
+  function createState(climateSensitivity) {
+    const state = {
+      lambda: F2X / (climateSensitivity || DEFAULT_LEVERS.climateSensitivity), // rétroaction climatique (W/m²/°C)
+      year: START_YEAR - 1,
+      pools: [0, 0, 0, 0], // carbone en excès dans l'air, par réservoir (GtC)
+      tSurface: 0,
+      tDeep: 0,
+      methaneForcing: 0,
+      permafrostTarget: 0,
+      permafrostReleased: 0, // GtC
+      cumulativeEmittedGtC: 0,
+      seaLevel: 0, // mm, compté depuis 2025
+      peakSinceToday: 0,
+      tPresent: 0,
+      co2ForcingPresent: 1,
+      years: [],
+    };
+    for (let year = START_YEAR; year <= PRESENT_YEAR; year++) stepYear(state, null, 0);
+    return state;
+  }
 
-    let tSurface = 0;
-    let tDeep = 0;
-    let methaneForcing = 0;
-    let permafrostTarget = 0;
-    let permafrostReleased = 0; // GtC
-    let cumulativeEmittedGtC = 0;
-    let seaLevel = 0; // mm, compté depuis 2025
-    let peakSinceToday = 0;
-    let tPresent = 0;
-    let co2ForcingPresent = 1;
+  /** Copie indépendante d'un état (pour faire une prévision sans toucher au vrai monde). */
+  function cloneState(state) {
+    return { ...state, pools: state.pools.slice(), years: state.years.slice() };
+  }
 
-    const years = [];
-    for (let year = START_YEAR; year <= END_YEAR; year++) {
-      const historical = year <= PRESENT_YEAR;
-      let co2Emitted; // Gt CO2 nets cette année
-      let detail = null;
-      let permafrostEmission = 0;
+  /**
+   * Fait avancer le climat d'un an.
+   * detail : émissions de l'année (futureEmissions ou emissionsAt), ou null pour une année historique.
+   * geoForcing : forçage de la géo-ingénierie solaire (W/m², négatif = refroidit).
+   */
+  function stepYear(state, detail, geoForcing) {
+    const year = state.year + 1;
+    state.year = year;
+    const historical = year <= PRESENT_YEAR;
+    const pools = state.pools;
+    let co2Emitted; // Gt CO2 nets cette année
+    let permafrostEmission = 0;
 
-      if (historical) {
-        co2Emitted = historicalEmissions(year);
-      } else {
-        detail = futureEmissions(levers, year);
-        // Le pergélisol libère du carbone quand la température dépasse celle de 2025,
-        // et ce carbone ne revient pas, même si on refroidit ensuite.
-        permafrostTarget = Math.max(
-          permafrostTarget,
-          PERMAFROST_GTC_PER_DEGREE * Math.max(0, tSurface - tPresent)
-        );
-        const release = Math.max(0, (permafrostTarget - permafrostReleased) / PERMAFROST_RELEASE_TIME);
-        permafrostReleased += release;
-        permafrostEmission = release * GTCO2_PER_GTC;
-        co2Emitted = detail.fossil + detail.landUse - detail.removals + permafrostEmission;
-      }
-
-      // Cycle du carbone : chaque réservoir se vide à son rythme et reçoit sa part des émissions.
-      const emittedGtC = co2Emitted / GTCO2_PER_GTC;
-      const excessBefore = pools.reduce((a, b) => a + b, 0);
-      const decay = poolDecay(sinkSlowdown(cumulativeEmittedGtC - excessBefore, tSurface));
-      cumulativeEmittedGtC += emittedGtC;
-      for (let i = 0; i < 4; i++) {
-        pools[i] = pools[i] * decay[i] + CARBON_POOL_SHARES[i] * emittedGtC;
-      }
-      const excessGtC = pools.reduce((a, b) => a + b, 0);
-      // On ne peut pas descendre sous le niveau préindustriel en retirant du CO2.
-      const co2 = Math.max(PREINDUSTRIAL_CO2_PPM, PREINDUSTRIAL_CO2_PPM + excessGtC / GTC_PER_PPM);
-      const co2Forcing = CO2_FORCING_COEFF * Math.log(co2 / PREINDUSTRIAL_CO2_PPM);
-
-      // Forçages hors CO2
-      let otherForcing;
-      let aerosolForcing;
-      let geoForcing = 0;
-      if (historical) {
-        // Avant 2025 : les gaz hors CO2 suivent le même rythme que le forçage du CO2 ;
-        // les aérosols, qui ne restent que quelques jours dans l'air, suivent les émissions de l'année.
-        const share = co2Forcing / CO2_FORCING_COEFF / Math.log(MEASURED_CO2_2025 / PREINDUSTRIAL_CO2_PPM);
-        methaneForcing = METHANE_FORCING_2025 * share;
-        otherForcing = OTHER_GHG_FORCING_2025 * share;
-        aerosolForcing =
-          (AEROSOL_FORCING_2025 * interpolate(HISTORY_FOSSIL_GTC, year)) /
-          interpolate(HISTORY_FOSSIL_GTC, PRESENT_YEAR);
-      } else {
-        // Le méthane disparaît de l'air en une douzaine d'années.
-        const methaneTarget = METHANE_FORCING_2025 * detail.methane;
-        methaneForcing += (methaneTarget - methaneForcing) / METHANE_LIFETIME;
-        otherForcing = OTHER_GHG_FORCING_2025;
-        aerosolForcing = AEROSOL_FORCING_2025 * detail.aerosols;
-        geoForcing = geoengineeringForcing(levers, year);
-      }
-      const forcing = co2Forcing + methaneForcing + otherForcing + aerosolForcing + geoForcing;
-
-      // Modèle à deux couches : la surface se réchauffe vite, l'océan profond lentement.
-      const flowToDeep = DEEP_OCEAN_EXCHANGE * (tSurface - tDeep);
-      tSurface += (forcing - lambda * tSurface - DEEP_OCEAN_EFFICACY * flowToDeep) / HEAT_CAPACITY_SURFACE;
-      tDeep += flowToDeep / HEAT_CAPACITY_DEEP;
-
-      if (year === PRESENT_YEAR) {
-        tPresent = tSurface;
-        co2ForcingPresent = co2Forcing;
-      }
-      if (!historical) {
-        seaLevel += SEA_LEVEL_RATE * Math.max(0, tSurface + SEA_LEVEL_OFFSET);
-        peakSinceToday = Math.max(peakSinceToday, tSurface);
-      }
-
-      years.push({
-        year,
-        historical,
-        co2Emitted,
-        co2,
-        forcing,
-        geoForcing,
-        temperature: tSurface,
-        seaLevel: historical ? 0 : seaLevel,
-        seaIce: Math.min(7, Math.max(0, SEA_ICE_2025 - SEA_ICE_PER_DEGREE * (tSurface - tPresent))),
-        ph: PH_PREINDUSTRIAL - PH_SLOPE * Math.log(co2 / PREINDUSTRIAL_CO2_PPM),
-        permafrost: permafrostEmission,
-        detail,
-      });
+    if (historical) {
+      co2Emitted = historicalEmissions(year);
+    } else {
+      // Le pergélisol libère du carbone quand la température dépasse celle de 2025,
+      // et ce carbone ne revient pas, même si on refroidit ensuite.
+      state.permafrostTarget = Math.max(
+        state.permafrostTarget,
+        PERMAFROST_GTC_PER_DEGREE * Math.max(0, state.tSurface - state.tPresent)
+      );
+      const release = Math.max(0, (state.permafrostTarget - state.permafrostReleased) / PERMAFROST_RELEASE_TIME);
+      state.permafrostReleased += release;
+      permafrostEmission = release * GTCO2_PER_GTC;
+      co2Emitted = detail.fossil + detail.landUse - detail.removals + permafrostEmission;
     }
 
-    return summarize(years, tPresent, peakSinceToday, co2ForcingPresent);
+    // Cycle du carbone : chaque réservoir se vide à son rythme et reçoit sa part des émissions.
+    const emittedGtC = co2Emitted / GTCO2_PER_GTC;
+    const excessBefore = pools.reduce((a, b) => a + b, 0);
+    const decay = poolDecay(sinkSlowdown(state.cumulativeEmittedGtC - excessBefore, state.tSurface));
+    state.cumulativeEmittedGtC += emittedGtC;
+    for (let i = 0; i < 4; i++) {
+      pools[i] = pools[i] * decay[i] + CARBON_POOL_SHARES[i] * emittedGtC;
+    }
+    const excessGtC = pools.reduce((a, b) => a + b, 0);
+    // On ne peut pas descendre sous le niveau préindustriel en retirant du CO2.
+    const co2 = Math.max(PREINDUSTRIAL_CO2_PPM, PREINDUSTRIAL_CO2_PPM + excessGtC / GTC_PER_PPM);
+    const co2Forcing = CO2_FORCING_COEFF * Math.log(co2 / PREINDUSTRIAL_CO2_PPM);
+
+    // Forçages hors CO2
+    let otherForcing;
+    let aerosolForcing;
+    if (historical) {
+      // Avant 2025 : les gaz hors CO2 suivent le même rythme que le forçage du CO2 ;
+      // les aérosols, qui ne restent que quelques jours dans l'air, suivent les émissions de l'année.
+      const share = co2Forcing / CO2_FORCING_COEFF / Math.log(MEASURED_CO2_2025 / PREINDUSTRIAL_CO2_PPM);
+      state.methaneForcing = METHANE_FORCING_2025 * share;
+      otherForcing = OTHER_GHG_FORCING_2025 * share;
+      aerosolForcing =
+        (AEROSOL_FORCING_2025 * interpolate(HISTORY_FOSSIL_GTC, year)) /
+        interpolate(HISTORY_FOSSIL_GTC, PRESENT_YEAR);
+      geoForcing = 0;
+    } else {
+      // Le méthane disparaît de l'air en une douzaine d'années.
+      const methaneTarget = METHANE_FORCING_2025 * detail.methane;
+      state.methaneForcing += (methaneTarget - state.methaneForcing) / METHANE_LIFETIME;
+      otherForcing = OTHER_GHG_FORCING_2025;
+      aerosolForcing = AEROSOL_FORCING_2025 * detail.aerosols;
+    }
+    const forcing = co2Forcing + state.methaneForcing + otherForcing + aerosolForcing + geoForcing;
+
+    // Modèle à deux couches : la surface se réchauffe vite, l'océan profond lentement.
+    const flowToDeep = DEEP_OCEAN_EXCHANGE * (state.tSurface - state.tDeep);
+    state.tSurface +=
+      (forcing - state.lambda * state.tSurface - DEEP_OCEAN_EFFICACY * flowToDeep) / HEAT_CAPACITY_SURFACE;
+    state.tDeep += flowToDeep / HEAT_CAPACITY_DEEP;
+
+    if (year === PRESENT_YEAR) {
+      state.tPresent = state.tSurface;
+      state.co2ForcingPresent = co2Forcing;
+    }
+    if (!historical) {
+      state.seaLevel += SEA_LEVEL_RATE * Math.max(0, state.tSurface + SEA_LEVEL_OFFSET);
+      state.peakSinceToday = Math.max(state.peakSinceToday, state.tSurface);
+    }
+
+    const record = {
+      year,
+      historical,
+      co2Emitted,
+      co2,
+      forcing,
+      geoForcing,
+      temperature: state.tSurface,
+      seaLevel: historical ? 0 : state.seaLevel,
+      seaIce: Math.min(7, Math.max(0, SEA_ICE_2025 - SEA_ICE_PER_DEGREE * (state.tSurface - state.tPresent))),
+      ph: PH_PREINDUSTRIAL - PH_SLOPE * Math.log(co2 / PREINDUSTRIAL_CO2_PPM),
+      permafrost: permafrostEmission,
+      detail: historical ? null : detail,
+    };
+    state.years.push(record);
+    return record;
   }
 
   /** Résumé des résultats : chiffres clés et points de bascule franchis. */
@@ -440,7 +474,13 @@
 
   const api = {
     simulate,
+    createState,
+    cloneState,
+    stepYear,
+    summarize,
     futureEmissions,
+    emissionsAt,
+    ABSORBED_SUNLIGHT,
     geoengineeringForcing,
     rampProgress,
     interpolate,

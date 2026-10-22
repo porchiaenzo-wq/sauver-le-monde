@@ -200,6 +200,14 @@
       url: 'https://www.imf.org/en/Publications/WEO',
       note: 'PIB mondial 2025 : environ 117 000 milliards de dollars.',
     },
+    cpi2025: {
+      type: 'donnees',
+      title: 'Global Landscape of Climate Finance 2025',
+      authors: 'Climate Policy Initiative',
+      year: 2025,
+      url: 'https://www.climatepolicyinitiative.org/press-release/global-climate-finance-hits-1-9-trillion-bridging-the-climate-investment-gap-remains-within-reach/',
+      note: 'Le financement climat mondial a atteint environ 1 900 milliards de dollars en 2023.',
+    },
     owid_co2: {
       type: 'donnees',
       title: 'CO2 and Greenhouse Gas Emissions',
