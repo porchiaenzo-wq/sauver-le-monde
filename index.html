@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sauver le monde</title>
+  <meta name="description" content="Un simulateur climatique basé sur les données du GIEC : change les leviers écologiques et regarde comment le monde évolue jusqu'en 2100.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Simulateur climatique · données du GIEC</p>
+      <h1>Comment sauver le monde ?</h1>
+      <p class="lede">
+        Nous sommes en 2025. La Terre s’est réchauffée d’environ <strong>1,4 °C</strong> depuis 1850, et le CO₂ dans l’air
+        atteint <strong>426 ppm</strong>, un niveau jamais vu depuis des millions d’années.
+        Change les leviers ci-dessous et regarde comment le monde évolue jusqu’en 2100.
+      </p>
+    </div>
+  </header>
+
+  <main class="wrap layout">
+    <!-- Colonne de gauche : les leviers -->
+    <section class="panel levers" aria-labelledby="levers-title">
+      <h2 id="levers-title">Tes leviers</h2>
+
+      <div class="presets" role="group" aria-label="Scénarios prêts à l’emploi">
+        <p class="presets-title">Scénarios prêts à l’emploi</p>
+        <div id="presets" class="preset-list"></div>
+        <p id="preset-description" class="preset-description" aria-live="polite"></p>
+      </div>
+
+      <div id="global-levers" class="lever-group"></div>
+      <div id="lever-groups"></div>
+
+      <div class="lever-group">
+        <label class="checkbox">
+          <input type="checkbox" id="geo-stop">
+          <span>Arrêt brutal de la géo-ingénierie en <strong>2070</strong> (guerre, crise, manque d’argent…)</span>
+        </label>
+      </div>
+
+      <button type="button" id="reset" class="button secondary">Tout remettre à zéro</button>
+      <button type="button" id="share" class="button secondary">Copier le lien de ce scénario</button>
+      <p id="share-status" class="share-status" aria-live="polite"></p>
+    </section>
+
+    <!-- Colonne de droite : les résultats -->
+    <section class="results" aria-labelledby="results-title">
+      <h2 id="results-title" class="visually-hidden">Résultats</h2>
+
+      <div id="verdict" class="verdict panel" aria-live="polite"></div>
+
+      <div id="stats" class="stats"></div>
+
+      <div class="charts">
+        <figure class="panel chart">
+          <figcaption>Réchauffement de la Terre depuis 1850 (°C)</figcaption>
+          <div id="chart-temperature"></div>
+        </figure>
+        <figure class="panel chart">
+          <figcaption>Émissions nettes de CO₂ (milliards de tonnes par an)</figcaption>
+          <div id="chart-emissions"></div>
+        </figure>
+        <figure class="panel chart">
+          <figcaption>CO₂ dans l’air (ppm)</figcaption>
+          <div id="chart-co2"></div>
+        </figure>
+        <figure class="panel chart">
+          <figcaption>Banquise arctique en septembre (millions de km²)</figcaption>
+          <div id="chart-ice"></div>
+        </figure>
+      </div>
+
+      <section class="panel" aria-labelledby="tipping-title">
+        <h3 id="tipping-title">Points de bascule</h3>
+        <p class="muted">
+          Au-delà d’un certain réchauffement, certains éléments de la Terre peuvent basculer, souvent sans retour possible.
+          Seuils estimés par Armstrong McKay et al. (<em>Science</em>, 2022), d’après le pic de réchauffement de ton scénario.
+        </p>
+        <ul id="tipping" class="tipping"></ul>
+      </section>
+
+      <section class="panel" aria-labelledby="sectors-title">
+        <h3 id="sectors-title">D’où viennent les émissions en 2050 ?</h3>
+        <div id="sectors" class="sectors"></div>
+      </section>
+    </section>
+  </main>
+
+  <section class="wrap panel prose" aria-labelledby="how-title">
+    <h2 id="how-title">Comment ça marche</h2>
+    <ol class="steps">
+      <li><strong>Tes choix fixent les émissions</strong> de chaque secteur, année après année, jusqu’à 2100.</li>
+      <li><strong>Le cycle du carbone</strong> calcule ce qui reste dans l’air : environ la moitié du CO₂ émis est absorbée par les océans et les forêts, mais ces « puits » se saturent quand il fait plus chaud (modèle FaIR, utilisé par le GIEC).</li>
+      <li><strong>Le forçage radiatif</strong> mesure la chaleur piégée en plus, en W/m² (CO₂, méthane, autres gaz, pollution aux particules, géo-ingénierie).</li>
+      <li><strong>La température</strong> suit avec retard, parce que l’océan met des siècles à se réchauffer en profondeur (modèle à deux couches).</li>
+      <li><strong>Les conséquences</strong> en découlent : montée des mers, banquise, acidité des océans, points de bascule.</li>
+    </ol>
+    <p>
+      Le modèle a été vérifié sur le passé : il retrouve le CO₂ mesuré (≈ 426 ppm en 2025) et le réchauffement dû à l’homme
+      (≈ 1,36 °C selon Forster et al. 2025). Si l’on ne change rien, il prévoit environ 2,7 °C en 2100, proche des 2,8 °C du
+      rapport 2025 du PNUE.
+    </p>
+
+    <h3>Les limites (à lire !)</h3>
+    <ul>
+      <li>C’est un <strong>modèle simplifié</strong> : il donne les grandes tendances, pas des prévisions précises. Les vrais modèles du climat tournent sur des superordinateurs.</li>
+      <li>Il ne calcule qu’une <strong>moyenne mondiale</strong> : pas de carte, pas de pluies, pas de canicules locales.</li>
+      <li>Il ne compte pas le <strong>coût</strong>, la faisabilité politique ni les effets sur la société.</li>
+      <li>Les calottes du Groenland et de l’Antarctique peuvent accélérer la montée des mers bien plus que prévu ici : le GIEC n’exclut pas jusqu’à 2 m en 2100 dans les pires cas.</li>
+      <li>Les points de bascule sont affichés comme des alertes, mais leurs effets (par exemple le pergélisol qui relâche son carbone d’un coup) ne sont que partiellement simulés.</li>
+    </ul>
+  </section>
+
+  <section class="wrap panel prose" aria-labelledby="sources-title">
+    <h2 id="sources-title">Toutes les sources</h2>
+    <p class="muted">
+      Rapports d’institutions scientifiques, études publiées dans des revues à comité de lecture, données mesurées
+      et sites de vulgarisation reconnus. Chaque levier renvoie aussi à ses sources (bouton « En savoir plus »).
+    </p>
+    <div id="sources"></div>
+  </section>
+
+  <footer class="wrap footer">
+    <p>Projet éducatif. Modèle libre et vérifiable : le code est sur GitHub. Pour aller plus loin, essaie <a href="https://www.climateinteractive.org/en-roads/">En-ROADS</a> (Climate Interactive et MIT Sloan).</p>
+  </footer>
+
+  <!-- Bandeau du résultat, visible en bas de l'écran sur téléphone -->
+  <div class="mini-result" aria-hidden="true">
+    <span>En 2100 : <strong id="mini-temperature">–</strong></span>
+    <a href="#results-title">Voir les résultats</a>
+  </div>
+
+  <script src="js/sources.js"></script>
+  <script src="js/levers.js"></script>
+  <script src="js/model.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
