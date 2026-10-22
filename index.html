@@ -32,8 +32,9 @@
   <section id="challenge-list" class="wrap challenge-list" aria-labelledby="challenge-list-title" hidden>
     <h2 id="challenge-list-title">Choisis un défi</h2>
     <p class="muted">
-      Règle les leviers pour atteindre l’objectif avant la fin du chrono, puis appuie sur « Valider mon plan ».
-      ★ objectif atteint · ★ plus de la moitié du temps restant · ★ peu de leviers touchés.
+      Règle les leviers pour atteindre l’objectif avant la fin du chrono, sans dépasser le budget, puis appuie sur
+      « Valider mon plan ». Tout pousser au maximum coûte trop cher : choisis les mesures les plus efficaces pour leur prix.
+      ★ objectif atteint · ★ plus de la moitié du temps restant · ★ plan très économe.
     </p>
     <ul id="challenge-cards" class="challenge-cards"></ul>
   </section>
@@ -58,6 +59,10 @@
       <button type="button" id="challenge-quit" class="button secondary inline">Abandonner</button>
     </div>
   </section>
+
+  <button type="button" id="challenge-clock" class="challenge-clock" hidden>
+    <span class="visually-hidden">Temps restant (revenir au défi) : </span><span id="challenge-clock-time">0:00</span>
+  </button>
 
   <main class="wrap layout">
     <!-- Colonne de gauche : les leviers -->

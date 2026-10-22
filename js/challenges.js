@@ -6,8 +6,9 @@
  *   locked    : leviers bloqués à une valeur (le curseur est grisé)
  *   limits    : valeur maximale autorisée pour certains leviers
  *   seconds   : temps imparti
- *   economy   : nombre maximal de leviers touchés pour la 3e étoile
- *   solution  : une solution qui marche (vérifiée par les tests, montrée en cas d'échec)
+ *   budget    : coût maximal en 2050 (milliards de dollars par an, valeur centrale de js/costs.js)
+ *   thrifty   : coût en dessous duquel on gagne la 3e étoile
+ *   solution  : une solution qui marche dans le budget (vérifiée par les tests, montrée en cas d'échec)
  *   lesson    : ce que le défi apprend, affiché à la fin
  */
 (function (root) {
@@ -37,6 +38,11 @@
       test: (r) => r.iceFreeYear === null,
       value: (r) => (r.iceFreeYear ? `disparaît en ${r.iceFreeYear}` : 'sauvée'),
     }),
+    withinBudget: (max) => ({
+      label: `Coût en 2050 sous ${max.toLocaleString('fr-FR')} milliards $ par an`,
+      test: (r, costs) => costs.total.central <= max,
+      value: (r, costs) => `${Math.round(costs.total.central).toLocaleString('fr-FR')} milliards $`,
+    }),
     phAbove: (min) => ({
       label: `Océans pas plus acides qu’aujourd’hui (pH ≥ ${fmt(min, 2)} en 2100)`,
       test: (r) => r.final.ph >= min,
@@ -57,9 +63,10 @@
       goals: [goal.finalBelow(2)],
       locked: NO_GEOENGINEERING,
       limits: {},
-      economy: 5,
+      budget: 1300,
+      thrifty: 1100,
       solution: {
-        cleanPower: 1, electricTransport: 1, heatPumps: 1, cleanIndustry: 0.8, energySaving: 0.2,
+        targetYear: 2055, energySaving: 0.5, cleanPower: 0.75, electricTransport: 1, heatPumps: 0.9, cleanIndustry: 0.8,
         stopDeforestation: 1, methaneCut: 1, reforestation: 3, directCapture: 3,
       },
       lesson:
@@ -74,10 +81,11 @@
       goals: [goal.arcticSaved()],
       locked: NO_GEOENGINEERING,
       limits: {},
-      economy: 5,
+      budget: 2300,
+      thrifty: 2000,
       solution: {
-        targetYear: 2040, cleanPower: 1, electricTransport: 1, heatPumps: 1, cleanIndustry: 1, energySaving: 0.3,
-        stopDeforestation: 1, methaneCut: 1, plantDiet: 0.7, reforestation: 8, rockWeathering: 2, directCapture: 10,
+        energySaving: 0.5, cleanPower: 0.5, electricTransport: 1, heatPumps: 0.4, cleanIndustry: 0.45, stopDeforestation: 0.5,
+        plantDiet: 1, methaneCut: 0.55, reforestation: 3, rockWeathering: 1, directCapture: 7.5,
       },
       lesson:
         'La banquise de septembre fond d’environ 3 m² pour chaque tonne de CO₂ émise (Notz et Stroeve, 2016). Elle est déjà très réduite : il faut agir vite, car le méthane et la pollution aux particules jouent aussi sur les prochaines décennies.',
@@ -91,10 +99,11 @@
       goals: [goal.finalBelow(2)],
       locked: { ...NO_GEOENGINEERING, climateSensitivity: 4 },
       limits: {},
-      economy: 6,
+      budget: 2700,
+      thrifty: 2300,
       solution: {
-        cleanPower: 1, electricTransport: 1, heatPumps: 1, cleanIndustry: 1, energySaving: 0.3,
-        stopDeforestation: 1, methaneCut: 1, plantDiet: 0.5, reforestation: 8, directCapture: 8,
+        targetYear: 2055, energySaving: 0.5, cleanPower: 1, electricTransport: 1, heatPumps: 0.9, cleanIndustry: 1,
+        stopDeforestation: 1, plantDiet: 0.5, methaneCut: 1, reforestation: 8, directCapture: 8,
       },
       lesson:
         'La sensibilité du climat est probablement entre 2,5 et 4 °C (GIEC). Comme on ne la connaît pas exactement, il vaut mieux prévoir une marge de sécurité.',
@@ -108,10 +117,11 @@
       goals: [goal.finalBelow(2)],
       locked: { ...NO_GEOENGINEERING, targetYear: 2070 },
       limits: { directCapture: 5 },
-      economy: 8,
+      budget: 1300,
+      thrifty: 1100,
       solution: {
-        cleanPower: 1, electricTransport: 1, heatPumps: 1, cleanIndustry: 1, energySaving: 0.3,
-        stopDeforestation: 1, methaneCut: 1, plantDiet: 0.6, reforestation: 8, rockWeathering: 1, directCapture: 5,
+        energySaving: 0.5, cleanPower: 0.7, electricTransport: 1, heatPumps: 0.7, cleanIndustry: 0.75, stopDeforestation: 0.75,
+        plantDiet: 0.6, methaneCut: 0.8, reforestation: 5.5, rockWeathering: 0.5, directCapture: 5,
       },
       lesson:
         'Chaque année de retard ajoute du CO₂ qui restera des siècles. Une transition lente oblige à des efforts beaucoup plus grands sur tout le reste, et à retirer du CO₂ de l’air.',
@@ -125,10 +135,11 @@
       goals: [goal.finalBelow(1.5)],
       locked: NO_GEOENGINEERING,
       limits: { directCapture: 2 },
-      economy: 10,
+      budget: 1800,
+      thrifty: 1700,
       solution: {
-        targetYear: 2040, cleanPower: 1, electricTransport: 1, heatPumps: 1, cleanIndustry: 1, energySaving: 0.5,
-        stopDeforestation: 1, methaneCut: 1, plantDiet: 1, reforestation: 10, rockWeathering: 2, directCapture: 2,
+        targetYear: 2041, energySaving: 0.5, cleanPower: 0.95, electricTransport: 1, heatPumps: 0.95, cleanIndustry: 0.95,
+        stopDeforestation: 1, plantDiet: 1, methaneCut: 1, reforestation: 10, rockWeathering: 2, directCapture: 2,
       },
       lesson:
         'Selon le GIEC, il ne reste presque plus de budget carbone pour 1,5 °C (environ 130 Gt de CO₂ début 2025, soit 3 ans d’émissions). Y revenir en 2100 suppose de dépasser ce seuil, puis de retirer du CO₂ en masse.',
@@ -142,22 +153,23 @@
       goals: [goal.peakBelow(1.5), goal.phAbove(8.05), goal.finalAbove(1)],
       locked: {},
       limits: {},
-      economy: 10,
+      budget: 1100,
+      thrifty: 900,
       solution: {
-        stratosphericAerosols: 1.2, geoStartYear: 2030, cleanPower: 1, electricTransport: 1, heatPumps: 1,
-        cleanIndustry: 0.8, stopDeforestation: 1, methaneCut: 1, reforestation: 5, directCapture: 3,
+        targetYear: 2055, energySaving: 0.5, cleanPower: 0.9, electricTransport: 1, heatPumps: 0.5, cleanIndustry: 0.3,
+        stopDeforestation: 0.7, plantDiet: 1, reforestation: 5, directCapture: 3, stratosphericAerosols: 1.1, geoStartYear: 2030,
       },
       lesson:
         'Les coraux souffrent à la fois de la chaleur et de l’acidité de l’eau. La géo-ingénierie peut éviter le pic de chaleur, mais seule la baisse du CO₂ protège les océans de l’acidification.',
     },
   ];
 
-  // Leviers qui ne comptent pas comme « touchés » pour l'étoile d'économie (réglages de calendrier).
-  const TIMING_LEVERS = ['targetYear', 'climateSensitivity', 'geoStartYear'];
+  // Chaque défi doit aussi tenir dans son budget.
+  for (const c of CHALLENGES) c.goals.push(goal.withinBudget(c.budget));
 
   const LEVEL_NAMES = { 1: 'Facile', 2: 'Moyen', 3: 'Difficile' };
 
-  const api = { CHALLENGES, TIMING_LEVERS, LEVEL_NAMES };
+  const api = { CHALLENGES, LEVEL_NAMES };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else Object.assign(root, api);
 })(typeof window !== 'undefined' ? window : globalThis);

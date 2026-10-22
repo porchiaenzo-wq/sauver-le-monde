@@ -250,11 +250,19 @@ summary { cursor: pointer; color: var(--accent); min-height: 32px; display: flex
 .level-3 { color: var(--danger); }
 .stars { color: var(--warn); letter-spacing: 2px; }
 
-.challenge-bar {
-  position: sticky; top: 0; z-index: 5; margin-bottom: 20px;
-  border-width: 2px; border-color: var(--accent);
-  box-shadow: 0 6px 20px rgb(0 0 0 / 0.08);
+.challenge-bar { margin-bottom: 20px; border-width: 2px; border-color: var(--accent); }
+
+/* Pastille du chrono, visible seulement quand le bandeau du défi est sorti de l'écran */
+.challenge-clock {
+  position: fixed; top: 12px; right: 16px; z-index: 20;
+  padding: 6px 16px; border-radius: 99px; border: 2px solid var(--accent);
+  background: var(--surface); box-shadow: 0 4px 14px rgb(0 0 0 / 0.15);
+  font-family: Fraunces, Georgia, serif; font-size: 1.4rem; font-weight: 700;
+  font-variant-numeric: tabular-nums; color: var(--accent); cursor: pointer;
+  min-height: 44px; display: flex; align-items: center;
 }
+.challenge-clock[hidden] { display: none; }
+.challenge-clock.urgent { color: var(--danger); border-color: var(--danger); }
 .challenge-bar h2 { margin-bottom: 4px; }
 .challenge-bar-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
 .challenge-timer-box { margin: 0; }

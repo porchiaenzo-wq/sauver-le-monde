@@ -507,8 +507,9 @@
     renderCharts(result);
     renderTipping(result);
     renderSectors(result);
-    renderCosts(window.Costs.computeCosts(levers, 2050));
-    for (const listener of resultListeners) listener(result, levers);
+    const costs = window.Costs.computeCosts(levers, 2050);
+    renderCosts(costs);
+    for (const listener of resultListeners) listener(result, levers, costs);
     // En défi, on n'écrit pas le scénario dans l'adresse (pas de solution à partager par erreur).
     if (!constraints) writeHash();
   }

@@ -7,7 +7,7 @@ Toutes les données et formules viennent de sources scientifiques vérifiées (G
 ## Les deux modes
 
 - **Bac à sable** : tous les leviers sont libres, avec des scénarios prêts à l'emploi.
-- **Défis chronométrés** : 6 défis (de facile à difficile) à réussir avant la fin du chrono, avec des contraintes (géo-ingénierie interdite, transition lente, climat plus sensible…). On gagne jusqu'à 3 étoiles : objectif atteint, plus de la moitié du temps restant, et peu de leviers touchés. Les défis sont décrits dans `js/challenges.js`, et les tests vérifient que chacun a une solution.
+- **Défis chronométrés** : 6 défis (de facile à difficile) à réussir avant la fin du chrono, avec des contraintes (géo-ingénierie interdite, transition lente, climat plus sensible…). Chaque défi a aussi un budget (coût en 2050) : tout pousser au maximum coûte trop cher, il faut choisir les mesures les plus efficaces pour leur prix. On gagne jusqu'à 3 étoiles : objectif atteint, plus de la moitié du temps restant, et plan très économe. Les défis sont décrits dans `js/challenges.js`, et les tests vérifient que chacun a une solution.
 
 ## Le coût des mesures
 

@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  const { CHALLENGES, TIMING_LEVERS, LEVEL_NAMES } = window;
+  const { CHALLENGES, LEVEL_NAMES } = window;
   const STORAGE_KEY = 'sauver-le-monde-defis';
   const WARNING_SECONDS = 15;
 
@@ -13,7 +13,7 @@
   let deadline = 0;
   let timer = null;
   let lastResult = null;
-  let lastLevers = null;
+  let lastCosts = null;
   let finished = false;
 
   const $ = (id) => document.getElementById(id);
@@ -79,7 +79,7 @@
         p.textContent = c.pitch;
         const time = document.createElement('p');
         time.className = 'muted';
-        time.textContent = `⏱ ${formatTime(c.seconds)}`;
+        time.textContent = `⏱ ${formatTime(c.seconds)} · budget ${c.budget.toLocaleString('fr-FR')} milliards $ par an`;
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'button';
@@ -117,6 +117,7 @@
     clearInterval(timer);
     timer = setInterval(tick, 250);
     tick();
+    updateClock();
     $('challenge-bar').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -125,6 +126,7 @@
     timer = null;
     current = null;
     $('challenge-bar').hidden = true;
+    updateClock();
     closeDialog();
     window.App.freeze(false);
     window.App.setConstraints(null);
@@ -132,34 +134,40 @@
 
   function tick() {
     const left = (deadline - Date.now()) / 1000;
-    const clock = $('challenge-timer');
-    clock.textContent = formatTime(left);
-    clock.classList.toggle('urgent', left <= WARNING_SECONDS);
+    $('challenge-timer').textContent = formatTime(left);
+    $('challenge-clock-time').textContent = formatTime(left);
+    for (const clock of [$('challenge-timer'), $('challenge-clock')]) {
+      clock.classList.toggle('urgent', left <= WARNING_SECONDS);
+    }
     if (left <= 0) finish(true);
   }
 
-  /** Nombre de leviers que le joueur a modifiés (hors calendrier et leviers bloqués). */
-  function leversMoved(levers) {
-    const start = { ...window.ClimateModel.DEFAULT_LEVERS, ...current.locked };
-    return Object.keys(start).filter(
-      (k) => !TIMING_LEVERS.includes(k) && k !== 'geoStopYear' && levers[k] !== start[k]
-    ).length;
+  // La pastille du chrono n'apparaît que lorsque le bandeau du défi n'est plus visible.
+  let barVisible = true;
+  function updateClock() {
+    $('challenge-clock').hidden = !current || finished || barVisible;
+  }
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver((entries) => {
+      barVisible = entries[0].isIntersecting;
+      updateClock();
+    }).observe($('challenge-bar'));
   }
 
-  function goalsMet(result) {
-    return current.goals.every((g) => g.test(result));
+  function goalsMet(result, costs) {
+    return current.goals.every((g) => g.test(result, costs));
   }
 
   /** Met à jour la liste des objectifs à chaque changement de levier. */
-  function renderGoals(result, levers) {
+  function renderGoals(result, levers, costs) {
     lastResult = result;
-    lastLevers = { ...levers };
+    lastCosts = costs;
     if (!current) return;
     // Le message « Pas encore » n'est plus d'actualité dès que le plan change.
     if (!finished) $('challenge-feedback').textContent = '';
     $('challenge-goals').replaceChildren(
       ...current.goals.map((g) => {
-        const ok = g.test(result);
+        const ok = g.test(result, costs);
         const li = document.createElement('li');
         li.className = ok ? 'met' : 'unmet';
         const mark = document.createElement('span');
@@ -167,7 +175,7 @@
         mark.setAttribute('aria-hidden', 'true');
         mark.textContent = ok ? '✓' : '✗';
         const text = document.createElement('span');
-        text.textContent = `${g.label} — ${g.value(result)}`;
+        text.textContent = `${g.label} — ${g.value(result, costs)}`;
         const sr = document.createElement('span');
         sr.className = 'visually-hidden';
         sr.textContent = ok ? ' (atteint)' : ' (pas encore)';
@@ -175,15 +183,16 @@
         return li;
       })
     );
-    $('challenge-levers').textContent = `Leviers touchés : ${leversMoved(levers)} (★ si ${current.economy} ou moins)`;
+    $('challenge-levers').textContent =
+      `★ bonus si le coût reste sous ${current.thrifty.toLocaleString('fr-FR')} milliards $ par an`;
   }
 
   function validate() {
     if (!current || finished || !lastResult) return;
-    if (goalsMet(lastResult)) {
+    if (goalsMet(lastResult, lastCosts)) {
       finish(false);
     } else {
-      const missing = current.goals.filter((g) => !g.test(lastResult)).map((g) => g.label.charAt(0).toLowerCase() + g.label.slice(1));
+      const missing = current.goals.filter((g) => !g.test(lastResult, lastCosts)).map((g) => g.label.charAt(0).toLowerCase() + g.label.slice(1));
       $('challenge-feedback').textContent = `Pas encore : ${missing.join(' ; ')}. Continue !`;
     }
   }
@@ -195,8 +204,9 @@
     clearInterval(timer);
     timer = null;
     const left = Math.max(0, (deadline - Date.now()) / 1000);
-    const won = lastResult && goalsMet(lastResult);
+    const won = lastResult && goalsMet(lastResult, lastCosts);
     window.App.freeze(true);
+    updateClock();
 
     let stars = 0;
     const reasons = [];
@@ -209,12 +219,13 @@
       } else {
         reasons.push('☆ Plus de la moitié du temps restant');
       }
-      const moved = leversMoved(lastLevers);
-      if (moved <= current.economy) {
+      const cost = Math.round(lastCosts.total.central);
+      const n = (v) => v.toLocaleString('fr-FR');
+      if (cost <= current.thrifty) {
         stars += 1;
-        reasons.push(`★ Économe : ${moved} leviers touchés (${current.economy} au plus)`);
+        reasons.push(`★ Économe : ${n(cost)} milliards $ par an (sous ${n(current.thrifty)})`);
       } else {
-        reasons.push(`☆ Économe : ${moved} leviers touchés (il fallait ${current.economy} au plus)`);
+        reasons.push(`☆ Économe : ${n(cost)} milliards $ par an (il fallait moins de ${n(current.thrifty)})`);
       }
       saveBest(current.id, stars);
     }
@@ -268,6 +279,9 @@
       $('challenge-retry').hidden = false;
     });
     $('challenge-retry').addEventListener('click', () => startChallenge(current));
+    $('challenge-clock').addEventListener('click', () =>
+      $('challenge-bar').scrollIntoView({ behavior: 'smooth', block: 'start' })
+    );
     // Fermer la fenêtre avec Échap laisse le défi terminé, avec les curseurs bloqués.
     window.App.onResult(renderGoals);
   }
