@@ -242,18 +242,28 @@
    * + dettes.
    */
   function resistanceTarget(game, upkeep, income, temperature) {
+    return resistanceParts(game, upkeep, income, temperature).reduce((s, p) => s + p.value, 0);
+  }
+
+  /** Détail de la résistance visée, pour l'expliquer au joueur. */
+  function resistanceParts(game, upkeep, income, temperature) {
     const geoLevels = LEVER_UPGRADES.filter((u) => u.resistance).reduce((s, u) => s + game.levels[u.id] * u.resistance, 0);
     const totalFinance = income * 2; // revenus fixes + bulles (l'autre moitié)
     const burden = upkeep / totalFinance;
-    return (
-      game.difficulty.resistanceBase +
-      45 * burden * (1 - 0.25 * game.levels.justTransition) +
-      geoLevels +
-      10 * game.levels.carbonTax -
-      10 * game.levels.education -
-      12 * Math.max(0, temperature - 1.4) +
-      (game.funds < 0 ? 30 : 0)
-    );
+    return [
+      { id: 'base', label: 'Lobbies et habitudes', value: game.difficulty.resistanceBase },
+      { id: 'costs', label: 'Coût des mesures', value: 45 * burden * (1 - 0.25 * game.levels.justTransition) },
+      { id: 'geo', label: 'Peur de la géo-ingénierie', value: geoLevels },
+      { id: 'tax', label: 'Taxe carbone', value: 10 * game.levels.carbonTax },
+      { id: 'education', label: 'Éducation au climat', value: -10 * game.levels.education },
+      { id: 'warming', label: 'Réchauffement visible', value: -12 * Math.max(0, temperature - 1.4) },
+      { id: 'debt', label: 'Dettes', value: game.funds < 0 ? 30 : 0 },
+    ].filter((p) => Math.abs(p.value) >= 0.5);
+  }
+
+  /** Détail de la résistance pour l'année en cours. */
+  function currentResistanceParts(game) {
+    return resistanceParts(game, game.yearlyUpkeep, game.yearlyIncome || passiveIncome(game, Math.floor(game.time)), game.lastYear.temperature);
   }
 
   /**
@@ -429,6 +439,7 @@
 
   const api = {
     createGame, tick, buy, collectBubble, forecast, setSpeed, nextPrice, upkeepAfter, targetValue, goalLabel, goalStatus,
+    currentResistanceParts, passiveIncome,
     START_YEAR, EMISSIONS_2025, SPEEDS, BUBBLE_LIFETIME,
   };
   if (isNode) module.exports = api;

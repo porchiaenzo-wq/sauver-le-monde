@@ -8,11 +8,23 @@ Toutes les données et formules viennent de sources scientifiques vérifiées (G
 
 Les leviers sont rangés en catégories, chacune avec sa couleur et son icône : Énergie et Terres et alimentation (**réduire** les émissions), Retirer le CO₂ de l'air (**retirer**), Géo-ingénierie solaire (**masquer** le réchauffement sans enlever le CO₂). L'en-tête de chaque catégorie résume en direct les leviers activés et leur coût, et chaque catégorie peut se replier.
 
-## Les trois modes
+## Les modes
 
 - **Bac à sable** : tous les leviers sont libres, avec des scénarios prêts à l'emploi.
 - **Découverte pas à pas** : pour les débutants, une visite guidée explique la page puis chaque levier un par un, avec son effet calculé (seul et à fond) et un bouton pour l'essayer.
 - **Défis chronométrés** : 6 défis (de facile à difficile) à réussir avant la fin du chrono, avec des contraintes (géo-ingénierie interdite, transition lente, climat plus sensible…). Chaque défi a aussi un budget (coût en 2050) : tout pousser au maximum coûte trop cher, il faut choisir les mesures les plus efficaces pour leur prix. On gagne jusqu'à 3 étoiles : objectif atteint, plus de la moitié du temps restant, et plan très économe. Les défis sont décrits dans `js/challenges.js`, et les tests vérifient que chacun a une solution.
+
+## Le jeu « Campagne » (`jeu.html`)
+
+Un jeu de stratégie inspiré de Plague Inc., mais pour sauver le monde :
+
+1. On choisit la période (**Mission 2050** : 25 ans, environ 3 minutes ; **Mission 2100** : 75 ans, environ 5 minutes à vitesse normale), puis la difficulté, qui fixe l'objectif : pour 2050, baisser les émissions de CO₂ de 50, 80 ou 90 % ; pour 2100, rester sous 2,2, 1,7 ou 1,5 °C.
+2. Sur la carte du monde, des bulles apparaissent sur les pays : les vertes ($) sont leurs dons, les bleues (♥) des élans de soutien qui font baisser la résistance. On clique dessus pour les ramasser.
+3. Avec l'argent, on achète des mesures par niveaux (prix de lancement + entretien annuel d'après le GIEC). Elles se déploient en plusieurs années.
+4. La résistance (lobbies, colère contre les coûts) ralentit tout ; à 100 %, la partie est perdue. Des événements (canicules, élections, sommets, éruptions…) changent la donne.
+5. Le temps défile en accéléré, avec pause, ×2 et ×4. La géo-ingénierie refroidit pendant la partie, mais ne compte pas pour l'objectif de 2100 : elle masque le réchauffement sans le soigner.
+
+Le moteur (`js/game-engine.js`) est séparé de l'affichage (`js/game-ui.js`). L'équilibrage est vérifié par des joueurs automatiques dans `tests/game.test.js` : ne rien faire perd toujours, un bon joueur gagne en facile, et le niveau difficile reste difficile.
 
 ## La carte des impacts
 
@@ -69,8 +81,13 @@ Les tests vérifient que le modèle retrouve les observations et que chaque levi
 | `js/app.js` | L'interface (curseurs, résultats) |
 | `js/challenges.js` | Les défis : objectifs, contraintes, chrono, solution |
 | `js/challenge-ui.js` | Le déroulement d'un défi (chrono, validation, étoiles) |
+| `jeu.html`, `css/game.css` | La page du jeu « Campagne » |
+| `js/game-data.js` | Les données du jeu : missions, difficultés, mesures, événements |
+| `js/game-engine.js` | Le moteur du jeu (sans affichage) |
+| `js/game-ui.js` | L'interface du jeu |
 | `tests/model.test.js` | Les tests du modèle |
 | `tests/challenges.test.js` | Les tests des défis |
 | `tests/costs.test.js` | Les tests des coûts |
 | `tests/impacts.test.js` | Les tests de la carte des impacts |
+| `tests/game.test.js` | Les tests et l'équilibrage du jeu |
 | `tools/build-map.mjs` | Fabrique le fond de carte |

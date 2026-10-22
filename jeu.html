@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sauver le monde : Campagne</title>
+  <meta name="description" content="Un jeu de stratégie pour sauver le climat : investis dans les bonnes mesures, récolte les fonds des pays et bats la résistance avant 2050 ou 2100.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- ?v=… : numéro de version, à augmenter à chaque mise en ligne -->
+  <link rel="stylesheet" href="css/game.css?v=9">
+</head>
+<body>
+  <!-- ===================== Écran de jeu ===================== -->
+  <main id="game" class="game" aria-label="Partie en cours">
+    <!-- Bandeau d'actualités (en haut à gauche) -->
+    <section class="hud hud-news" aria-label="Actualités">
+      <span class="hud-tag">INFO</span>
+      <p id="news-headline" class="news-headline" aria-live="polite"></p>
+      <button type="button" id="news-toggle" class="hud-icon-button" aria-expanded="false" aria-controls="news-log" aria-label="Voir toutes les actualités">▾</button>
+      <ol id="news-log" class="news-log" hidden></ol>
+    </section>
+
+    <!-- Date et vitesse (en haut à droite) -->
+    <section class="hud hud-time" aria-label="Date et vitesse">
+      <p id="date" class="date"></p>
+      <div class="speeds" role="group" aria-label="Vitesse du temps">
+        <button type="button" class="speed" data-speed="0" aria-label="Pause">❚❚</button>
+        <button type="button" class="speed" data-speed="1" aria-label="Vitesse normale">▶</button>
+        <button type="button" class="speed" data-speed="2" aria-label="Vitesse ×2">▶▶</button>
+        <button type="button" class="speed" data-speed="4" aria-label="Vitesse ×4">▶▶▶</button>
+      </div>
+      <button type="button" id="quit" class="hud-icon-button" aria-label="Quitter la partie">✕</button>
+    </section>
+
+    <!-- La carte -->
+    <div class="map-area">
+      <div class="map-frame" id="map-frame">
+        <div id="game-map" class="game-map"></div>
+        <div id="bubbles" class="bubbles" aria-label="Bulles à ramasser"></div>
+        <div class="view-switch" role="group" aria-label="Que montre la carte ?">
+          <button type="button" class="view-button" data-view="transition" aria-pressed="true">Transition</button>
+          <button type="button" class="view-button" data-view="impacts" aria-pressed="false">Impacts</button>
+        </div>
+      </div>
+      <ul id="map-legend" class="map-legend" aria-label="Légende de la carte"></ul>
+    </div>
+
+    <!-- Barre du bas -->
+    <section class="hud hud-bottom" aria-label="Tableau de bord">
+      <button type="button" id="open-measures" class="hud-block hud-funds">
+        <span class="hud-label">MESURES</span>
+        <span class="hud-value"><span class="coin" aria-hidden="true">$</span> <span id="funds">0</span> <small>Md$</small></span>
+        <span id="funds-flow" class="hud-sub"></span>
+      </button>
+
+      <div class="hud-block hud-world" aria-live="off">
+        <p class="hud-label">MONDE · <span id="goal-label"></span></p>
+        <div class="world-stats">
+          <p><span class="stat-name">Réchauffement</span> <strong id="stat-temp"></strong> <span id="stat-unmasked" class="stat-sub"></span></p>
+          <p><span class="stat-name">Émissions</span> <strong id="stat-emissions"></strong> <span id="stat-emissions-change" class="stat-sub"></span></p>
+          <p><span class="stat-name">CO₂ dans l’air</span> <strong id="stat-co2"></strong></p>
+        </div>
+        <div class="goal-bar" aria-hidden="true"><span id="goal-progress"></span><span id="goal-target"></span></div>
+        <p id="forecast" class="hud-sub"></p>
+      </div>
+
+      <button type="button" id="open-world" class="hud-block hud-resistance">
+        <span class="hud-label">RÉSISTANCE</span>
+        <span class="hud-value"><span id="resistance">0</span> %</span>
+        <span class="resistance-bar" aria-hidden="true"><span id="resistance-fill"></span></span>
+        <span id="resistance-trend" class="hud-sub"></span>
+      </button>
+    </section>
+
+    <!-- Petit texte « +320 Md$ » qui s'envole quand on ramasse une bulle -->
+    <div id="floaters" class="floaters" aria-live="polite"></div>
+  </main>
+
+  <!-- ===================== Panneau des mesures ===================== -->
+  <section id="measures" class="overlay" role="dialog" aria-modal="true" aria-labelledby="measures-title" hidden>
+    <div class="panel">
+      <header class="panel-head">
+        <h2 id="measures-title">Mesures</h2>
+        <p class="panel-funds">Fonds : <strong id="measures-funds"></strong> · entretien <span id="measures-upkeep"></span> · revenus <span id="measures-income"></span></p>
+        <button type="button" class="close" data-close aria-label="Fermer">✕</button>
+      </header>
+      <div class="tabs" role="tablist" id="measure-tabs"></div>
+      <div id="measure-list" class="measure-list" role="tabpanel"></div>
+      <p class="panel-note">
+        Chaque niveau a un prix de lancement, puis un coût d’entretien chaque année (estimé d’après le GIEC).
+        Les mesures se déploient en plusieurs années, plus lentement si la résistance est forte.
+        Le jeu est en pause tant que ce panneau est ouvert.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== Panneau du monde ===================== -->
+  <section id="world" class="overlay" role="dialog" aria-modal="true" aria-labelledby="world-title" hidden>
+    <div class="panel">
+      <header class="panel-head">
+        <h2 id="world-title">État du monde</h2>
+        <button type="button" class="close" data-close aria-label="Fermer">✕</button>
+      </header>
+      <div class="world-grid">
+        <figure class="chart-box">
+          <figcaption>Réchauffement (°C)</figcaption>
+          <div id="world-chart-temp"></div>
+        </figure>
+        <figure class="chart-box">
+          <figcaption>Émissions nettes de CO₂ (Gt par an)</figcaption>
+          <div id="world-chart-emissions"></div>
+        </figure>
+        <div class="world-box">
+          <h3>La résistance</h3>
+          <p id="resistance-explain"></p>
+          <ul id="resistance-factors" class="factor-list"></ul>
+        </div>
+        <div class="world-box">
+          <h3>Les régions</h3>
+          <ul id="region-list" class="region-list"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Écrans de départ ===================== -->
+  <section id="setup" class="overlay setup" aria-labelledby="setup-title">
+    <div class="setup-box">
+      <p class="setup-kicker">Sauver le monde · Campagne</p>
+      <h1 id="setup-title">Choisis ta mission</h1>
+
+      <div id="setup-period" class="setup-step">
+        <p class="setup-question">1. Jusqu’à quand ?</p>
+        <div id="period-cards" class="cards"></div>
+      </div>
+
+      <div id="setup-difficulty" class="setup-step" hidden>
+        <p class="setup-question">2. Quel objectif ?</p>
+        <div id="difficulty-cards" class="cards"></div>
+        <button type="button" id="setup-back" class="link-button">← Changer de période</button>
+      </div>
+
+      <div id="setup-briefing" class="setup-step" hidden>
+        <p class="setup-question">3. Ta mission</p>
+        <div id="briefing" class="briefing"></div>
+        <div class="setup-actions">
+          <button type="button" id="setup-back2" class="link-button">← Changer d’objectif</button>
+          <button type="button" id="start" class="button-primary">Lancer la partie</button>
+        </div>
+      </div>
+
+      <p class="setup-footer"><a href="index.html">← Retour au simulateur</a></p>
+    </div>
+  </section>
+
+  <!-- ===================== Fin de partie ===================== -->
+  <section id="end" class="overlay" role="dialog" aria-modal="true" aria-labelledby="end-title" hidden>
+    <div class="panel end-panel">
+      <h2 id="end-title"></h2>
+      <p id="end-stars" class="end-stars"></p>
+      <p id="end-message"></p>
+      <ul id="end-details" class="end-details"></ul>
+      <figure class="chart-box">
+        <figcaption>Ton parcours : réchauffement (°C)</figcaption>
+        <div id="end-chart"></div>
+      </figure>
+      <div class="setup-actions">
+        <button type="button" id="replay" class="button-primary">Rejouer cette mission</button>
+        <button type="button" id="new-mission" class="button-secondary">Autre mission</button>
+        <a class="button-secondary" href="index.html">Retour au simulateur</a>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/sources.js?v=9"></script>
+  <script src="js/levers.js?v=9"></script>
+  <script src="js/model.js?v=9"></script>
+  <script src="js/costs.js?v=9"></script>
+  <script src="js/charts.js?v=9"></script>
+  <script src="js/world-map.js?v=9"></script>
+  <script src="js/impacts.js?v=9"></script>
+  <script src="js/game-data.js?v=9"></script>
+  <script src="js/game-engine.js?v=9"></script>
+  <script src="js/game-ui.js?v=9"></script>
+</body>
+</html>

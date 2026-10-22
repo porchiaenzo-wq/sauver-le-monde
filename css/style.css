@@ -302,6 +302,12 @@ input[type='range'] { width: 100%; accent-color: var(--accent); min-height: 44px
   border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
 }
 .mode-button[aria-pressed='true'] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+/* Lien vers le jeu « Campagne » (jeu.html), mis en avant */
+.mode-link {
+  display: inline-flex; align-items: center; text-decoration: none;
+  background: #0c2236; color: #4fd1ff; border-color: #4fd1ff;
+}
+.mode-link:hover { background: #10304a; }
 
 .challenge-list { margin-bottom: 20px; }
 .challenge-cards {

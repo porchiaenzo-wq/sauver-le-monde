@@ -41,6 +41,19 @@ for (const [id, names] of Object.entries(REGIONS)) {
   const shape = merge(topo, geoms.filter((g) => names.includes(g.properties.name)));
   out[id] = { d: round(path(shape)), center: path.centroid(shape).map((v) => Math.round(v)) };
 }
+// Frontières des pays (un seul tracé) et centre de chaque pays, pour placer les bulles du jeu.
+const { mesh } = await import(B + '/node_modules/topojson-client/src/index.js');
+const borders = round(path(mesh(topo, topo.objects.countries, (a, b) => a !== b)));
+const countries = [];
+for (const g of geoms) {
+  const region = Object.keys(REGIONS).find((r) => REGIONS[r].includes(g.properties.name));
+  if (region === 'antarctica') continue;
+  const f = feature(topo, g);
+  const area = path.area(f);
+  if (area < 4) continue; // trop petit pour y poser une bulle
+  countries.push({ region, center: path.centroid(f).map((v) => Math.round(v)), area: Math.round(area) });
+}
+
 const js = `/*
  * Fond de carte : une forme par grande région, projection Equal Earth.
  * Fichier généré automatiquement à partir de Natural Earth (domaine public), via le paquet world-atlas.
@@ -48,7 +61,7 @@ const js = `/*
  */
 (function (root) {
   'use strict';
-  const WORLD_MAP = ${JSON.stringify({ width: W, height: H, regions: out })};
+  const WORLD_MAP = ${JSON.stringify({ width: W, height: H, regions: out, borders, countries })};
   if (typeof module !== 'undefined' && module.exports) module.exports = { WORLD_MAP };
   else root.WORLD_MAP = WORLD_MAP;
 })(typeof window !== 'undefined' ? window : globalThis);
