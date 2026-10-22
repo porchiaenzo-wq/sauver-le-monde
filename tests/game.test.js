@@ -69,10 +69,15 @@ test('une partie commence en 2026 avec le monde actuel', () => {
 
 test('le temps avance selon la vitesse choisie', () => {
   const g = E.createGame({ period: '2050', difficulty: 'normal', seed: 1 });
-  E.tick(g, g.period.secondsPerYear); // une seconde réelle × durée d'une année = 1 an à ×1
+  const year = E.secondsPerYear(g.period);
+  E.tick(g, g.period.secondsPerMonth); // un mois à vitesse ×1
+  assert.ok(Math.abs(g.time - (2026 + 1 / 12)) < 1e-9, 'le temps saute d’un mois');
+  E.tick(g, g.period.secondsPerMonth / 2);
+  assert.ok(Math.abs(g.time - (2026 + 1 / 12)) < 1e-9, 'pas de demi-mois : on attend le mois suivant');
+  E.tick(g, year - g.period.secondsPerMonth * 1.5);
   assert.ok(Math.abs(g.time - 2027) < 1e-9);
   E.setSpeed(g, 4);
-  E.tick(g, g.period.secondsPerYear);
+  E.tick(g, year);
   assert.ok(Math.abs(g.time - 2031) < 1e-9);
   E.setSpeed(g, 0);
   E.tick(g, 10);
@@ -94,7 +99,7 @@ test('les mesures se déploient peu à peu, pas d’un coup', () => {
   const g = E.createGame({ period: '2100', difficulty: 'normal', seed: 1 });
   g.funds = 1e6;
   for (let i = 0; i < 4; i++) E.buy(g, 'cleanPower');
-  E.tick(g, g.period.secondsPerYear * 1.01);
+  E.tick(g, E.secondsPerYear(g.period) * 1.01);
   assert.ok(g.deployed.cleanPower > 0.4 && g.deployed.cleanPower < 0.6, `${g.deployed.cleanPower}`);
 });
 
@@ -115,6 +120,15 @@ test('les bulles disparaissent si on ne clique pas', () => {
   E.setSpeed(g, 1);
   for (let t = 0; t < E.BUBBLE_LIFETIME + 1; t += 0.25) E.tick(g, 0.25);
   assert.ok(!g.bubbles.some((b) => b.id === id));
+});
+
+test('l’argent et la résistance évoluent chaque mois', () => {
+  const g = E.createGame({ period: '2100', difficulty: 'normal', seed: 2 });
+  const funds = g.funds;
+  const resistance = g.resistance;
+  E.tick(g, g.period.secondsPerMonth);
+  assert.ok(Math.abs(g.funds - (funds + g.yearlyIncome / 12)) < 1, 'un douzième des revenus annuels');
+  assert.notEqual(g.resistance, resistance);
 });
 
 test('la partie se termine à la fin de la mission', () => {
@@ -150,7 +164,7 @@ test('la prévision annonce un résultat proche de la vraie fin de partie (sans 
   const g = E.createGame({ period: '2100', difficulty: 'normal', seed: 4 });
   g.funds = 1e6;
   for (const id of ['cleanPower', 'methaneCut', 'stopDeforestation']) for (let i = 0; i < 3; i++) E.buy(g, id);
-  E.tick(g, g.period.secondsPerYear * 5);
+  E.tick(g, E.secondsPerYear(g.period) * 5);
   const predicted = E.forecast(g).value;
   while (g.status === 'playing') E.tick(g, 0.5);
   assert.ok(Math.abs(predicted - g.result.value) < 0.25, `prévu ${predicted.toFixed(2)}, obtenu ${g.result.value.toFixed(2)}`);

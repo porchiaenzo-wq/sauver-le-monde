@@ -28,7 +28,7 @@
   let speedBeforePause = null;
   let openPanel = null;
   let lastFrame = 0;
-  let renderedYear = null;
+  let renderedMonth = null;
   let currentForecast = null;
   let lastNews = null;
   let endShown = false;
@@ -73,10 +73,10 @@
     $('period-cards').replaceChildren(
       ...Object.values(D.PERIODS).map((p) => {
         const years = p.endYear - E.START_YEAR + 1;
-        const seconds = years * p.secondsPerYear;
+        const seconds = years * E.secondsPerYear(p);
         return card(p.title, [
           ['card-text', p.pitch],
-          ['card-meta', `${years} ans · environ ${Math.round(seconds / 60)} minutes à vitesse normale`],
+          ['card-meta', `${years} ans, mois par mois · environ ${Math.round(seconds / 60)} minutes à vitesse normale (moins en ×2 ou ×4)`],
         ], () => {
           choice.period = p.id;
           buildDifficulties();
@@ -267,11 +267,7 @@
   // ---------------------------------------------------------------------------
 
   function renderHud() {
-    // La mission s'arrête fin décembre de sa dernière année.
-    const time = Math.min(game.time, game.period.endYear + 0.999);
-    const year = Math.floor(time);
-    const month = MONTHS[Math.min(11, Math.floor((time - year) * 12))];
-    $('date').textContent = `${month} ${year}`;
+    $('date').textContent = monthLabel(game.month);
     for (const b of document.querySelectorAll('.speed')) b.setAttribute('aria-pressed', String(Number(b.dataset.speed) === game.speed));
 
     $('funds').textContent = money(game.funds);
@@ -322,12 +318,26 @@
     $('goal-progress').className = f.reached ? 'ok' : '';
   }
 
+  /**
+   * Date lisible à partir du nombre de mois écoulés depuis janvier 2026 (nombre entier : pas d'erreur d'arrondi).
+   * La mission s'arrête fin décembre de sa dernière année.
+   */
+  function monthLabel(month) {
+    const last = (game.period.endYear - E.START_YEAR + 1) * 12 - 1;
+    const m = Math.min(month, last);
+    return `${MONTHS[m % 12]} ${E.START_YEAR + Math.floor(m / 12)}`;
+  }
+
+  function newsDate(n) {
+    return monthLabel(n.month);
+  }
+
   function renderNews() {
     const latest = game.news[0];
     if (latest === lastNews) return;
     lastNews = latest;
     const headline = $('news-headline');
-    headline.textContent = `${latest.year} · ${latest.title} — ${latest.text}`;
+    headline.textContent = `${newsDate(latest)} · ${latest.title} — ${latest.text}`;
     headline.className = `news-headline tone-${latest.tone}`;
     headline.classList.remove('flash');
     void headline.offsetWidth; // relance l'animation
@@ -336,7 +346,7 @@
       ...game.news.map((n) => {
         const li = document.createElement('li');
         li.className = `tone-${n.tone}`;
-        li.textContent = `${n.year} · ${n.title} — ${n.text}`;
+        li.textContent = `${newsDate(n)} · ${n.title} — ${n.text}`;
         return li;
       })
     );
@@ -539,7 +549,7 @@
     game = E.createGame({ period: choice.period, difficulty: choice.difficulty, regions: undefined });
     for (const el of bubbleEls.values()) el.remove();
     bubbleEls.clear();
-    renderedYear = null;
+    renderedMonth = null;
     lastNews = null;
     endShown = false;
     currentForecast = E.forecast(game);
@@ -587,12 +597,14 @@
     lastFrame = timestamp;
     if (game && game.status === 'playing') {
       E.tick(game, dt);
-      const year = Math.floor(game.time);
-      if (year !== renderedYear) {
-        renderedYear = year;
-        currentForecast = E.forecast(game);
+      // Nouveau mois : la carte change ; nouvelle année : on recalcule la prévision.
+      if (game.month !== renderedMonth) {
+        if (renderedMonth == null || Math.floor(game.month / 12) !== Math.floor(renderedMonth / 12)) {
+          currentForecast = E.forecast(game);
+          if (openPanel === 'world') renderWorld();
+        }
+        renderedMonth = game.month;
         renderMap();
-        if (openPanel === 'world') renderWorld();
       }
       renderBubbles();
       renderHud();

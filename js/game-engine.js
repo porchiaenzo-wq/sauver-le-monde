@@ -3,9 +3,10 @@
  * L'interface (js/game-ui.js) appelle tick() plusieurs fois par seconde et affiche l'état.
  *
  * Une partie :
- *   - le temps avance (secondsPerYear par an à vitesse ×1, ×2 ou ×4) ;
- *   - chaque année, les mesures achetées se déploient peu à peu, le climat avance d'un an,
- *     on paie l'entretien des mesures et on reçoit des fonds ;
+ *   - le temps avance mois par mois (secondsPerMonth par mois à vitesse ×1, ×2 ou ×4) ;
+ *   - chaque mois, les mesures achetées se déploient un peu, on paie leur entretien, on reçoit des fonds,
+ *     la résistance évolue et un événement peut survenir ;
+ *   - chaque année (en janvier), le climat avance d'un an ;
  *   - des bulles apparaissent sur les pays : fonds (argent) ou soutien (fait baisser la résistance) ;
  *   - la résistance (lobbies, colère contre les coûts) monte : à 100 %, la partie est perdue ;
  *   - à la fin de la mission, on vérifie l'objectif.
@@ -25,6 +26,7 @@
   const SPEEDS = [0, 1, 2, 4];
   const GOAL_AVERAGE_YEARS = 5;
   const RESISTANCE_PULL = 0.15; // part de l'écart rattrapée chaque année
+  const MONTHLY_PULL = 1 - Math.pow(1 - RESISTANCE_PULL, 1 / 12);
 
   const LEVER_UPGRADES = Data.UPGRADES.filter((u) => u.group !== 'society');
   const BY_ID = Object.fromEntries(Data.UPGRADES.map((u) => [u.id, u]));
@@ -59,8 +61,9 @@
       goal: difficulty.goals[period.id],
       random: makeRandom(options.seed != null ? options.seed : Date.now()),
       regions: options.regions || Object.keys(Data.REGION_FUNDING).filter((r) => Data.REGION_FUNDING[r] > 0),
-      time: START_YEAR, // année en cours, avec ses fractions
-      nextYear: START_YEAR, // prochaine année à calculer
+      time: START_YEAR, // date en années (2026,5 = juillet 2026), avance par mois
+      month: 0, // nombre de mois écoulés depuis janvier 2026
+      clock: 0, // secondes de jeu accumulées vers le mois suivant
       speed: 1,
       realTime: 0, // secondes réelles écoulées (pour la durée de vie des bulles)
       funds: difficulty.startFunds,
@@ -77,9 +80,11 @@
       effects: [], // effets d'événements en cours : { income, speed, until }
       yearlyIncome: 0,
       yearlyUpkeep: 0,
+      pendingEffect: {}, // effets d'événements sur les émissions ou le soleil, appliqués au calcul de l'année
       status: 'playing',
       result: null,
     };
+    game.yearlyIncome = passiveIncome(game, START_YEAR);
     addNews(game, 'Début de la mission', `Nous sommes en ${START_YEAR}. Le monde compte sur toi.`, 'neutral');
     return game;
   }
@@ -87,6 +92,11 @@
   // ---------------------------------------------------------------------------
   // Valeurs dérivées
   // ---------------------------------------------------------------------------
+
+  /** Année en cours, calculée sur le nombre entier de mois (pas d'erreur d'arrondi). */
+  function currentYear(game) {
+    return START_YEAR + Math.floor(game.month / 12);
+  }
 
   /** Valeur visée d'un levier selon le niveau acheté. */
   function targetValue(game, id) {
@@ -161,9 +171,10 @@
     return { detail, geo, natural };
   }
 
-  /** Fait avancer d'un an le déploiement des mesures vers leur valeur visée. */
-  function deploy(game, deployed, resistance) {
-    const slow = (1 - 0.5 * (resistance / 100)) * (1 + 0.1 * game.levels.carbonTax) * activeFactor(game, 'speed');
+  /** Fait avancer le déploiement des mesures vers leur valeur visée (fraction d'année : 1/12 pour un mois). */
+  function deploy(game, deployed, resistance, fraction = 1) {
+    const slow =
+      fraction * (1 - 0.5 * (resistance / 100)) * (1 + 0.1 * game.levels.carbonTax) * activeFactor(game, 'speed');
     for (const u of LEVER_UPGRADES) {
       const target = targetValue(game, u.id);
       const range = u.levels[u.levels.length - 1] - Model.DEFAULT_LEVERS[u.id];
@@ -177,31 +188,51 @@
   // Une année
   // ---------------------------------------------------------------------------
 
-  function processYear(game, year) {
-    // Événement de l'année
-    let eventEffect = null;
-    if (game.random() < Data.EVENTS_PER_YEAR) {
+  /** Un mois : déploiement, argent, résistance, événements et bulles. */
+  function processMonth(game) {
+    const year = START_YEAR + Math.floor(game.month / 12);
+
+    deploy(game, game.deployed, game.resistance, 1 / 12);
+
+    // Argent : revenus fixes moins entretien des mesures en place (montants annuels / 12)
+    game.yearlyUpkeep = Math.max(0, Costs.computeCostsDeployed(game.deployed).total.central);
+    game.yearlyIncome = passiveIncome(game, year);
+    game.funds += (game.yearlyIncome - game.yearlyUpkeep) / 12;
+
+    // Résistance : elle se rapproche d'un niveau fixé par la pression du moment.
+    game.resistanceTarget = resistanceTarget(game, game.yearlyUpkeep, game.yearlyIncome, game.lastYear.temperature);
+    game.resistance = clamp(game.resistance + (game.resistanceTarget - game.resistance) * MONTHLY_PULL, 0, 100);
+
+    if (game.random() < Data.EVENTS_PER_YEAR / 12) {
       const event = pickEvent(game);
-      eventEffect = event.effect;
       applyEvent(game, event);
+      // Les effets sur les émissions et le soleil comptent dans le calcul du climat de l'année.
+      if (event.effect.emissions) game.pendingEffect.emissions = (game.pendingEffect.emissions || 1) * event.effect.emissions;
+      if (event.effect.geo) game.pendingEffect.geo = (game.pendingEffect.geo || 0) + event.effect.geo;
+    }
+    spawnBubbles(game, 1 / 12);
+
+    if (game.resistance >= 100) {
+      finish(game, false, 'La résistance a gagné : les pays abandonnent la transition.');
+      return;
     }
 
-    deploy(game, game.deployed, game.resistance);
+    game.month += 1;
+    game.time = START_YEAR + game.month / 12;
+    // Fin décembre : le climat avance d'un an.
+    if (game.month % 12 === 0) processYear(game, year);
+  }
+
+  /** Une année : le climat avance d'un an avec les mesures en place. */
+  function processYear(game, year) {
+    const eventEffect = game.pendingEffect;
+    game.pendingEffect = {};
     const { detail, geo, natural } = yearInputs(game, game.deployed, eventEffect);
     const record = Model.stepYear(game.climate, detail, geo);
     Model.stepYear(game.unmasked, detail, natural);
     game.lastYear = record;
-
-    // Argent : revenus fixes moins entretien des mesures en place
-    const upkeep = Math.max(0, Costs.computeCostsDeployed(game.deployed).total.central);
-    const income = passiveIncome(game, year);
-    game.funds += income - upkeep;
-    game.yearlyIncome = income;
-    game.yearlyUpkeep = upkeep;
-
-    // Résistance : elle se rapproche chaque année d'un niveau fixé par la pression du moment.
-    game.resistanceTarget = resistanceTarget(game, upkeep, income, record.temperature);
-    game.resistance = clamp(game.resistance + (game.resistanceTarget - game.resistance) * RESISTANCE_PULL, 0, 100);
+    const upkeep = game.yearlyUpkeep;
+    const income = game.yearlyIncome;
 
     game.history.push({
       year,
@@ -226,9 +257,6 @@
       addNews(game, 'Zéro émission nette !', 'Le monde absorbe désormais autant de CO₂ qu’il en émet.', 'good');
     }
 
-    if (game.resistance >= 100) {
-      return finish(game, false, 'La résistance a gagné : les pays abandonnent la transition.');
-    }
     if (year >= game.period.endYear) {
       const status = goalStatus(game, game.climate, game.unmasked);
       return finish(game, status.reached, status.reached ? 'Objectif atteint !' : 'Objectif manqué.');
@@ -263,7 +291,7 @@
 
   /** Détail de la résistance pour l'année en cours. */
   function currentResistanceParts(game) {
-    return resistanceParts(game, game.yearlyUpkeep, game.yearlyIncome || passiveIncome(game, Math.floor(game.time)), game.lastYear.temperature);
+    return resistanceParts(game, game.yearlyUpkeep, game.yearlyIncome || passiveIncome(game, currentYear(game)), game.lastYear.temperature);
   }
 
   /**
@@ -315,22 +343,21 @@
   // Le temps qui passe
   // ---------------------------------------------------------------------------
 
-  /** Avance la partie de realSeconds secondes réelles. */
+  /** Avance la partie de realSeconds secondes réelles : le temps saute de mois en mois. */
   function tick(game, realSeconds) {
-    if (game.status !== 'playing' || game.speed === 0) return;
+    if (game.status !== 'playing' || game.speed === 0) return 0;
     game.realTime += realSeconds;
-    const years = (realSeconds * game.speed) / game.period.secondsPerYear;
-    const before = game.time;
-    game.time += years;
-
-    spawnBubbles(game, years);
-    game.bubbles = game.bubbles.filter((b) => b.expires > game.realTime);
-
-    while (game.time >= game.nextYear + 1 && game.status === 'playing') {
-      processYear(game, game.nextYear);
-      game.nextYear += 1;
+    game.clock += realSeconds * game.speed;
+    const spm = game.period.secondsPerMonth;
+    let months = 0;
+    // (le petit 1e-9 évite qu'une erreur d'arrondi fasse rater un mois)
+    while (game.clock + 1e-9 >= spm && game.status === 'playing') {
+      game.clock -= spm;
+      processMonth(game);
+      months += 1;
     }
-    return game.time - before;
+    game.bubbles = game.bubbles.filter((b) => b.expires > game.realTime);
+    return months;
   }
 
   function spawnBubbles(game, years) {
@@ -347,7 +374,7 @@
           kind,
           region,
           spot: game.random(), // position dans la région (choisie par l'interface)
-          amount: kind === 'funds' ? bubbleAmount(game, region, Math.floor(game.time)) : SUPPORT_BUBBLE_RESISTANCE,
+          amount: kind === 'funds' ? bubbleAmount(game, region, currentYear(game)) : SUPPORT_BUBBLE_RESISTANCE,
           expires: game.realTime + BUBBLE_LIFETIME,
         });
       }
@@ -429,7 +456,7 @@
   }
 
   function addNews(game, title, text, tone) {
-    game.news.unshift({ year: Math.floor(game.time), title, text, tone });
+    game.news.unshift({ year: START_YEAR + Math.floor(game.month / 12), month: game.month, title, text, tone });
     game.news = game.news.slice(0, 30);
   }
 
@@ -440,7 +467,7 @@
   const api = {
     createGame, tick, buy, collectBubble, forecast, setSpeed, nextPrice, upkeepAfter, targetValue, goalLabel, goalStatus,
     currentResistanceParts, passiveIncome,
-    START_YEAR, EMISSIONS_2025, SPEEDS, BUBBLE_LIFETIME,
+    START_YEAR, EMISSIONS_2025, SPEEDS, BUBBLE_LIFETIME, secondsPerYear: (period) => period.secondsPerMonth * 12,
   };
   if (isNode) module.exports = api;
   else root.GameEngine = api;

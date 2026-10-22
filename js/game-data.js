@@ -8,18 +8,21 @@
 (function (root) {
   'use strict';
 
-  /** Les deux missions. secondsPerYear : durée d'une année à vitesse ×1 (équilibrage par tests). */
+  /**
+   * Les deux missions. Le temps avance mois par mois : secondsPerMonth est la durée d'un mois
+   * à vitesse ×1 (équilibrage par tests et retours de jeu).
+   */
   const PERIODS = {
     2050: {
-      id: '2050', endYear: 2050, secondsPerYear: 8, title: 'Mission 2050',
+      id: '2050', endYear: 2050, secondsPerMonth: 1, title: 'Mission 2050',
       pitch: '25 ans pour faire chuter les émissions. Une partie courte et nerveuse.',
-      // Bulles par année de jeu (environ une toutes les 3 secondes à vitesse ×1)
-      fundBubblesPerYear: 2.6, supportBubblesPerYear: 0.6,
+      // Bulles par année de jeu (environ une toutes les 4 secondes à vitesse ×1)
+      fundBubblesPerYear: 3, supportBubblesPerYear: 0.7,
     },
     2100: {
-      id: '2100', endYear: 2100, secondsPerYear: 4, title: 'Mission 2100',
+      id: '2100', endYear: 2100, secondsPerMonth: 0.6, title: 'Mission 2100',
       pitch: '75 ans pour limiter le réchauffement. Une partie longue, où les erreurs se paient tard.',
-      fundBubblesPerYear: 1.3, supportBubblesPerYear: 0.3,
+      fundBubblesPerYear: 1.8, supportBubblesPerYear: 0.45,
     },
   };
 
@@ -38,7 +41,7 @@
     },
     hard: {
       id: 'hard', name: 'Difficile', startFunds: 700, incomeFactor: 0.9, resistanceStart: 25, resistanceBase: 45,
-      goals: { 2050: { type: 'emissions', reduction: 0.9 }, 2100: { type: 'temperature', max: 1.5 } },
+      goals: { 2050: { type: 'emissions', reduction: 0.95 }, 2100: { type: 'temperature', max: 1.5 } },
     },
   };
 
