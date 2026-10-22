@@ -131,7 +131,7 @@
     const perYear = Data.CLIMATE_FINANCE_2023 * (1 - Data.PASSIVE_INCOME_SHARE) * growth;
     const weights = game.regions.map((r) => Data.REGION_FUNDING[r]);
     const mean = weights.reduce((a, b) => a + b, 0) / weights.length;
-    const base = (perYear / game.period.fundBubblesPerYear) * (Data.REGION_FUNDING[region] / mean);
+    const base = (perYear / fundBubblesPerYear(game.period)) * (Data.REGION_FUNDING[region] / mean);
     return Math.round(base * incomeMultiplier(game));
   }
 
@@ -210,7 +210,7 @@
       if (event.effect.emissions) game.pendingEffect.emissions = (game.pendingEffect.emissions || 1) * event.effect.emissions;
       if (event.effect.geo) game.pendingEffect.geo = (game.pendingEffect.geo || 0) + event.effect.geo;
     }
-    spawnBubbles(game, 1 / 12);
+    spawnBubbles(game);
 
     if (game.resistance >= 100) {
       finish(game, false, 'La résistance a gagné : les pays abandonnent la transition.');
@@ -360,14 +360,30 @@
     return months;
   }
 
-  function spawnBubbles(game, years) {
+  /** Rythme des bulles d'argent, en mois de jeu : écart minimum, et écart moyen. */
+  function fundBubbleTiming(period) {
+    const gap = Math.max(1, Math.round(Data.FUND_BUBBLE_MIN_GAP_SECONDS / period.secondsPerMonth));
+    const every = Math.max(gap + 1, Data.FUND_BUBBLE_EVERY_SECONDS / period.secondsPerMonth);
+    // Après l'écart minimum, une chance par mois telle que l'écart moyen soit « every »
+    // (attente moyenne = gap − 1 + 1 / chance mois).
+    return { gap, every, chance: 1 / (every - gap + 1) };
+  }
+
+  function fundBubblesPerYear(period) {
+    return 12 / fundBubbleTiming(period).every;
+  }
+
+  /** Fait apparaître les bulles du mois (appelé une fois par mois). */
+  function spawnBubbles(game) {
+    const timing = fundBubbleTiming(game.period);
+    const fundsReady = game.month - (game.lastFundsMonth != null ? game.lastFundsMonth : -Infinity) >= timing.gap;
     const kinds = [
-      ['funds', game.period.fundBubblesPerYear],
-      ['support', game.period.supportBubblesPerYear],
+      ['funds', fundsReady ? timing.chance : 0],
+      ['support', game.period.supportBubblesPerYear / 12],
     ];
-    for (const [kind, rate] of kinds) {
-      // Tirage de Poisson simplifié : probabilité rate × durée.
-      if (game.random() < rate * years) {
+    for (const [kind, chance] of kinds) {
+      if (game.random() < chance) {
+        if (kind === 'funds') game.lastFundsMonth = game.month;
         const region = game.regions[Math.floor(game.random() * game.regions.length)];
         game.bubbles.push({
           id: game.nextBubbleId++,
@@ -467,7 +483,7 @@
   const api = {
     createGame, tick, buy, collectBubble, forecast, setSpeed, nextPrice, upkeepAfter, targetValue, goalLabel, goalStatus,
     currentResistanceParts, passiveIncome,
-    START_YEAR, EMISSIONS_2025, SPEEDS, BUBBLE_LIFETIME, secondsPerYear: (period) => period.secondsPerMonth * 12,
+    START_YEAR, EMISSIONS_2025, SPEEDS, BUBBLE_LIFETIME, fundBubbleTiming, secondsPerYear: (period) => period.secondsPerMonth * 12,
   };
   if (isNode) module.exports = api;
   else root.GameEngine = api;

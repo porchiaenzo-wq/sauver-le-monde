@@ -113,6 +113,25 @@ test('les bulles de fonds rapportent de l’argent, celles de soutien font baiss
   assert.equal(E.collectBubble(g, bubble.id), null, 'une bulle ne se ramasse qu’une fois');
 });
 
+test('les bulles d’argent sont espacées : jamais deux à moins de 4 secondes, environ une toutes les 8 secondes', () => {
+  for (const period of ['2050', '2100']) {
+    const g = E.createGame({ period, difficulty: 'normal', seed: 5 });
+    const seen = new Map(); // id -> seconde d'apparition
+    let t = 0;
+    while (g.status === 'playing') {
+      E.tick(g, 0.25);
+      t += 0.25;
+      for (const b of g.bubbles) if (b.kind === 'funds' && !seen.has(b.id)) seen.set(b.id, t);
+      g.bubbles = []; // on ne ramasse rien, mais on évite que les bulles s'accumulent
+    }
+    const times = [...seen.values()];
+    const gaps = times.slice(1).map((x, i) => x - times[i]);
+    assert.ok(Math.min(...gaps) >= 4 - 0.6, `${period} : écart minimum ${Math.min(...gaps)} s`);
+    const mean = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+    assert.ok(mean > 6.5 && mean < 9.5, `${period} : écart moyen ${mean.toFixed(1)} s`);
+  }
+});
+
 test('les bulles disparaissent si on ne clique pas', () => {
   const g = E.createGame({ period: '2050', difficulty: 'normal', seed: 3 });
   while (!g.bubbles.length) E.tick(g, 0.25);

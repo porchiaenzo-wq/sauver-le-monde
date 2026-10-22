@@ -19,7 +19,7 @@ Les leviers sont rangés en catégories, chacune avec sa couleur et son icône :
 Un jeu de stratégie inspiré de Plague Inc., mais pour sauver le monde :
 
 1. On choisit la période (**Mission 2050** : 25 ans, environ 5 minutes ; **Mission 2100** : 75 ans, environ 9 minutes à vitesse normale ; le temps avance mois par mois), puis la difficulté, qui fixe l'objectif : pour 2050, baisser les émissions de CO₂ de 50, 80 ou 95 % ; pour 2100, rester sous 2,2, 1,7 ou 1,5 °C.
-2. Sur la carte du monde, des bulles apparaissent sur les pays : les vertes ($) sont leurs dons, les bleues (♥) des élans de soutien qui font baisser la résistance. On clique dessus pour les ramasser.
+2. Sur la carte du monde, des bulles apparaissent sur les pays : les vertes ($) sont leurs dons (environ une toutes les 8 secondes, jamais deux à moins de 4 secondes), les bleues (♥) des élans de soutien qui font baisser la résistance. On clique dessus pour les ramasser.
 3. Avec l'argent, on achète des mesures par niveaux (prix de lancement + entretien annuel d'après le GIEC). Elles se déploient en plusieurs années.
 4. La résistance (lobbies, colère contre les coûts) ralentit tout ; à 100 %, la partie est perdue. Des événements (canicules, élections, sommets, éruptions…) changent la donne.
 5. Le temps défile en accéléré, avec pause, ×2 et ×4. La géo-ingénierie refroidit pendant la partie, mais ne compte pas pour l'objectif de 2100 : elle masque le réchauffement sans le soigner.

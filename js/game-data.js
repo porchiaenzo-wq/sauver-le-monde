@@ -16,13 +16,12 @@
     2050: {
       id: '2050', endYear: 2050, secondsPerMonth: 1, title: 'Mission 2050',
       pitch: '25 ans pour faire chuter les émissions. Une partie courte et nerveuse.',
-      // Bulles par année de jeu (environ une toutes les 4 secondes à vitesse ×1)
-      fundBubblesPerYear: 3, supportBubblesPerYear: 0.7,
+      supportBubblesPerYear: 0.7, // bulles de soutien par année de jeu
     },
     2100: {
       id: '2100', endYear: 2100, secondsPerMonth: 0.6, title: 'Mission 2100',
       pitch: '75 ans pour limiter le réchauffement. Une partie longue, où les erreurs se paient tard.',
-      fundBubblesPerYear: 1.8, supportBubblesPerYear: 0.45,
+      supportBubblesPerYear: 0.45,
     },
   };
 
@@ -44,6 +43,11 @@
       goals: { 2050: { type: 'emissions', reduction: 0.95 }, 2100: { type: 'temperature', max: 1.5 } },
     },
   };
+
+  // Bulles d'argent : en moyenne une toutes les 8 secondes à vitesse ×1, jamais deux à moins de 4 secondes.
+  // (Le total d'argent versé par les bulles ne dépend pas de ces réglages : moins de bulles = des bulles plus grosses.)
+  const FUND_BUBBLE_EVERY_SECONDS = 8;
+  const FUND_BUBBLE_MIN_GAP_SECONDS = 4;
 
   // Financement climat mondial en 2023 : environ 1 900 milliards de dollars par an [cpi2025].
   // Une moitié arrive d'elle-même chaque année, l'autre moitié par les bulles des pays.
@@ -145,7 +149,7 @@
 
   const api = {
     PERIODS, DIFFICULTIES, UPGRADES, GROUPS, EVENTS, EVENTS_PER_YEAR, REGION_FUNDING,
-    CLIMATE_FINANCE_2023, PASSIVE_INCOME_SHARE, INCOME_GROWTH,
+    CLIMATE_FINANCE_2023, PASSIVE_INCOME_SHARE, INCOME_GROWTH, FUND_BUBBLE_EVERY_SECONDS, FUND_BUBBLE_MIN_GAP_SECONDS,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.GameData = api;
