@@ -125,6 +125,19 @@
         <h3 id="sectors-title">D’où viennent les émissions en 2050 ?</h3>
         <div id="sectors" class="sectors"></div>
       </section>
+
+      <section class="panel" aria-labelledby="costs-title">
+        <h3 id="costs-title">Combien ça coûte ? (en 2050)</h3>
+        <p class="cost-total" id="cost-total" aria-live="polite"></p>
+        <p class="muted" id="cost-range"></p>
+        <div id="cost-items" class="sectors"></div>
+        <p class="muted cost-context">
+          Coût = tonnes de CO₂ évitées × coût par tonne, d’après le GIEC et les études citées (ordres de grandeur).
+          Ces montants ne comptent pas les dégâts évités. Pour comparer : selon le GIEC, rester sous 2 °C coûterait
+          1,3 à 2,7 % du PIB mondial en 2050, et les bénéfices dépassent probablement les coûts sur le siècle.
+          Une économie veut dire que la solution revient moins cher que celle qu’elle remplace.
+        </p>
+      </section>
     </section>
   </main>
 
@@ -189,6 +202,7 @@
   <script src="js/sources.js"></script>
   <script src="js/levers.js"></script>
   <script src="js/model.js"></script>
+  <script src="js/costs.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/app.js"></script>
   <script src="js/challenges.js"></script>

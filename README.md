@@ -9,6 +9,10 @@ Toutes les données et formules viennent de sources scientifiques vérifiées (G
 - **Bac à sable** : tous les leviers sont libres, avec des scénarios prêts à l'emploi.
 - **Défis chronométrés** : 6 défis (de facile à difficile) à réussir avant la fin du chrono, avec des contraintes (géo-ingénierie interdite, transition lente, climat plus sensible…). On gagne jusqu'à 3 étoiles : objectif atteint, plus de la moitié du temps restant, et peu de leviers touchés. Les défis sont décrits dans `js/challenges.js`, et les tests vérifient que chacun a une solution.
 
+## Le coût des mesures
+
+Chaque mesure affiche son coût en 2050, et un encart « Combien ça coûte ? » donne le total, sa fourchette et sa part du PIB mondial. Le calcul (`js/costs.js`) reprend la méthode du GIEC : tonnes de CO₂ évitées × coût par tonne (fourchettes du GIEC 2022, de Beerling et al. 2020, de Smith et Wagner 2018, d'Angel 2006). Ce sont des ordres de grandeur, sans les dégâts évités. Vérification : le scénario « Accord de Paris » coûte environ 1,4 % du PIB mondial en 2050, dans la fourchette du GIEC (1,3 à 2,7 %).
+
 ## Ouvrir la page
 
 - **Sur ton ordinateur** : double-clique sur `index.html`. Aucune installation n'est nécessaire.
@@ -46,6 +50,7 @@ Les tests vérifient que le modèle retrouve les observations et que chaque levi
 | `css/style.css` | L'apparence (thème clair et sombre) |
 | `js/model.js` | Le moteur de simulation |
 | `js/levers.js` | Les leviers, leurs explications et les scénarios prêts à l'emploi |
+| `js/costs.js` | Le coût de chaque mesure |
 | `js/sources.js` | La bibliographie |
 | `js/charts.js` | Les graphiques |
 | `js/app.js` | L'interface (curseurs, résultats) |
@@ -53,3 +58,4 @@ Les tests vérifient que le modèle retrouve les observations et que chaque levi
 | `js/challenge-ui.js` | Le déroulement d'un défi (chrono, validation, étoiles) |
 | `tests/model.test.js` | Les tests du modèle |
 | `tests/challenges.test.js` | Les tests des défis |
+| `tests/costs.test.js` | Les tests des coûts |

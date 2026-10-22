@@ -110,6 +110,23 @@
       note: 'Premier grand bilan comparant toutes les techniques de géo-ingénierie (efficacité, coût, rapidité, sécurité).',
     },
 
+    ipcc_ar6_wg3_ch7: {
+      type: 'rapport',
+      title: 'AR6 groupe III, chapitre 7 : Agriculture, forêts et autres usages des terres',
+      authors: 'GIEC / IPCC',
+      year: 2022,
+      url: 'https://www.ipcc.ch/report/ar6/wg3/chapter/chapter-7/',
+      note: 'Reboisement : 1,6 Gt de CO2 par an possibles à moins de 100 $ la tonne, pour environ 130 milliards de dollars par an.',
+    },
+    lse_costs: {
+      type: 'vulgarisation',
+      title: 'Assessing the cost of climate change mitigation',
+      authors: 'Grantham Research Institute, London School of Economics',
+      year: 2022,
+      url: 'https://www.lse.ac.uk/granthaminstitute/explainers/how-much-will-it-cost-to-cut-global-greenhouse-gas-emissions/',
+      note: 'Résumé du GIEC : rester sous 2 °C réduirait le PIB mondial de 1,3 à 2,7 % en 2050 (sans compter les dégâts évités) ; les bénéfices dépassent probablement les coûts sur le siècle.',
+    },
+
     // --- Données mesurées ---
     gcb2025: {
       type: 'donnees',
@@ -166,6 +183,14 @@
       year: 2025,
       url: 'https://ember-energy.org/latest-insights/global-electricity-review-2025/',
       note: 'Électricité bas carbone en 2024 : 40,9 % (hydraulique 14,3 %, nucléaire 9 %, éolien 8,1 %, solaire 6,9 %).',
+    },
+    imf_weo2025: {
+      type: 'donnees',
+      title: 'World Economic Outlook, octobre 2025',
+      authors: 'Fonds monétaire international (FMI / IMF)',
+      year: 2025,
+      url: 'https://www.imf.org/en/Publications/WEO',
+      note: 'PIB mondial 2025 : environ 117 000 milliards de dollars.',
     },
     owid_co2: {
       type: 'donnees',
@@ -330,6 +355,15 @@
       note: 'Arrêter brutalement la géo-ingénierie provoquerait un réchauffement très rapide (« choc de terminaison »).',
     },
 
+    smithwagner2018: {
+      type: 'etude',
+      title: 'Stratospheric aerosol injection tactics and costs in the first 15 years of deployment',
+      authors: 'Smith et Wagner, Environmental Research Letters 13',
+      year: 2018,
+      url: 'https://salatainstitute.harvard.edu/wp-content/uploads/2024/06/Smith_2018_Environ._Res._Lett._13_124001.pdf',
+      note: 'Une flotte d’avions spéciaux coûterait environ 2,25 milliards de dollars par an en moyenne sur les 15 premières années.',
+    },
+
     // --- Vulgarisation fiable ---
     carbonbrief: {
       type: 'vulgarisation',
@@ -338,6 +372,14 @@
       year: 2026,
       url: 'https://www.carbonbrief.org/',
       note: 'Site d’information spécialisé, très rigoureux, qui cite et explique les études.',
+    },
+    carbonbrief_ar6wg3: {
+      type: 'vulgarisation',
+      title: 'In-depth Q&A: The IPCC’s sixth assessment on how to tackle climate change',
+      authors: 'Carbon Brief',
+      year: 2022,
+      url: 'https://www.carbonbrief.org/in-depth-qa-the-ipccs-sixth-assessment-on-how-to-tackle-climate-change',
+      note: 'Explication détaillée du rapport du GIEC sur les solutions et leurs coûts.',
     },
     en_roads: {
       type: 'vulgarisation',

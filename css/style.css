@@ -192,6 +192,14 @@ summary { cursor: pointer; color: var(--accent); min-height: 32px; display: flex
   background: var(--danger); border-radius: 6px;
 }
 .sector-bar.negative::after { background: var(--good); }
+.sector-bar.cost::after { background: var(--warn); }
+.sector-bar.cost.negative::after { background: var(--good); }
+.lever-cost { font-size: 0.85rem; color: var(--badge-ambitieux); margin: 2px 0 0; min-height: 0; }
+.lever-cost:empty { display: none; }
+.lever-cost.saving { color: var(--good); }
+.cost-title { font-weight: 600; color: var(--ink); margin-top: 12px; margin-bottom: 4px; }
+.cost-total { font-family: Fraunces, Georgia, serif; font-size: 1.6rem; font-weight: 700; margin-bottom: 2px; }
+.cost-context { font-size: 0.85rem; margin-top: 12px; }
 .sector-value { font-variant-numeric: tabular-nums; color: var(--ink-2); }
 @media (max-width: 560px) {
   .sector { grid-template-columns: 1fr; gap: 4px; }

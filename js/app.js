@@ -72,7 +72,11 @@
       scheduleUpdate();
     });
 
-    wrapper.append(head, input);
+    // Coût de la mesure en 2050, mis à jour à chaque changement
+    const cost = document.createElement('p');
+    cost.className = 'lever-cost';
+
+    wrapper.append(head, input, cost);
 
     if (lever.realism) {
       const badge = document.createElement('span');
@@ -94,9 +98,18 @@
       details.appendChild(fact);
     }
     details.appendChild(sourceLinks(lever.sources));
+    const unitCost = window.Costs.COSTS[lever.id];
+    if (unitCost) {
+      const title = document.createElement('p');
+      title.className = 'cost-title';
+      title.textContent = `Coût : ${window.Costs.describeUnitCost(lever.id)}`;
+      const note = document.createElement('p');
+      note.textContent = unitCost.note;
+      details.append(title, note, sourceLinks(unitCost.sources));
+    }
     wrapper.appendChild(details);
 
-    inputs[lever.id] = { input, value, lever };
+    inputs[lever.id] = { input, value, lever, cost };
     return wrapper;
   }
 
@@ -374,6 +387,65 @@
     );
   }
 
+  /** Montant en milliards de dollars, lisible (« 1 600 milliards $ », « économie de 80 milliards $ »). */
+  function money(billions) {
+    const rounded = Math.abs(billions) >= 100 ? Math.round(billions / 10) * 10 : Math.round(billions);
+    return `${Math.abs(rounded).toLocaleString('fr-FR')} milliards $`;
+  }
+
+  function renderCosts(costs) {
+    // Ligne sous chaque curseur
+    const byId = Object.fromEntries(costs.items.map((i) => [i.id, i]));
+    for (const { lever, cost } of Object.values(inputs)) {
+      const item = byId[lever.id];
+      if (!item || Math.abs(item.central) < 0.5) {
+        cost.textContent = item && window.Costs.COSTS[lever.id].central === 0 ? 'Coût en 2050 : presque nul' : '';
+        cost.className = 'lever-cost';
+        continue;
+      }
+      cost.textContent =
+        item.central < 0 ? `Économie en 2050 : ≈ ${money(item.central)} par an` : `Coût en 2050 : ≈ ${money(item.central)} par an`;
+      cost.className = 'lever-cost' + (item.central < 0 ? ' saving' : '');
+    }
+
+    // Encart des résultats
+    const t = costs.total;
+    const share = costs.gdpShare * 100;
+    document.getElementById('cost-total').textContent =
+      t.central < 0 ? `Économie de ${money(t.central)} par an` : `${money(t.central)} par an`;
+    document.getElementById('cost-range').textContent =
+      `Fourchette : ${t.low < 0 ? '−' : ''}${money(t.low)} à ${money(t.high)} · soit ≈ ${fmt(share, 1)} % du PIB mondial de 2025`;
+
+    const labels = Object.fromEntries(allLevers.map((l) => [l.id, l.label]));
+    const max = Math.max(1, ...costs.items.map((i) => Math.abs(i.central)));
+    const box = document.getElementById('cost-items');
+    const rows = costs.items
+      .filter((i) => Math.abs(i.central) >= 0.5)
+      .sort((a, b) => b.central - a.central)
+      .map((i) => {
+        const row = document.createElement('div');
+        row.className = 'sector';
+        const name = document.createElement('span');
+        name.className = 'sector-name';
+        name.textContent = labels[i.id];
+        const bar = document.createElement('span');
+        bar.className = 'sector-bar cost' + (i.central < 0 ? ' negative' : '');
+        bar.style.setProperty('--size', `${(Math.abs(i.central) / max) * 100}%`);
+        const val = document.createElement('span');
+        val.className = 'sector-value';
+        val.textContent = (i.central < 0 ? 'économie ' : '') + money(i.central);
+        row.append(name, bar, val);
+        return row;
+      });
+    if (!rows.length) {
+      const p = document.createElement('p');
+      p.className = 'muted';
+      p.textContent = 'Aucune mesure pour l’instant : rien à payer… mais rien n’est évité non plus.';
+      rows.push(p);
+    }
+    box.replaceChildren(...rows);
+  }
+
   function renderSources() {
     const box = document.getElementById('sources');
     const byType = {};
@@ -435,6 +507,7 @@
     renderCharts(result);
     renderTipping(result);
     renderSectors(result);
+    renderCosts(window.Costs.computeCosts(levers, 2050));
     for (const listener of resultListeners) listener(result, levers);
     // En défi, on n'écrit pas le scénario dans l'adresse (pas de solution à partager par erreur).
     if (!constraints) writeHash();
